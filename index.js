@@ -9,8 +9,8 @@ async function run() {
   /** @type {import("@octokit/webhooks").WebhookPayloadPullRequestReview} */
   // @ts-ignore
   const payload = github.context.payload
-  if (payload.action !== "review") {
-    throw new Error("This only works on reviews")
+  if (!validate(payload)) {
+    return
   }
   
   const token = core.getInput('GITHUB_TOKEN');
@@ -20,67 +20,75 @@ async function run() {
   const repo = pr.base.repo
   const review = payload.review
 
-  if (review.state !== "APPROVED"){
-    return
-  }
-
   const repoDeets = { owner: repo.owner.login, repo: repo.name }
+  const fileStrings = await getPRChangedFiles(octokit, repoDeets)
+  
+  const filesWhichArentOwned = getFilesNotOwnedByCodeOwner(review.user.login, fileStrings)
 
-  // https://developer.github.com/v3/pulls/#list-pull-requests-files
-  const options = octokit.pulls.listFiles.endpoint.merge(repoDeets);
-  
-  /** @type { import("@octokit/rest").PullsListFilesResponseItem[]} */
-  const files = await octokit.paginate(options)
-  const fileStrings = files.map(f => `/${f.filename}`)
-  
-  const filesWhichArentOwned = []
-  const codeowners = new Codeowners();
-  for (const file of fileStrings) {
-    let owners = codeowners.getOwner(file);
-    if (!owners.includes(review.user.login)) {
-      filesWhichArentOwned.push(file)
-    }
-  }
-  
   if (filesWhichArentOwned.length > 0) {
     core.info("Bailing because not all files were covered by the codeowners for this review")
     core.info(`Missing: ${filesWhichArentOwned.join(", ")}`)
     return
   }
   
-  await octokit.issues.createComment({...repoDeets, issue_number: pr.number, body: `Merging because @${review.user.login} is a code-owner of all the changes - thanks!`})
-  await octokit.pulls.merge({ ...repoDeets, pull_number: pr.number })
+  await commentAndMerge(octokit, repoDeets, pr, review);
 }
 
-// const possibleRoots = getPossibleRootsForFolders(fileStrings)
+async function commentAndMerge (octokit, repoDeets, pr, review) {
+  await octokit.issues.createComment({ ...repoDeets, issue_number: pr.number, body: `Merging because @${review.user.login} is a code-owner of all the changes - thanks!` });
+  await octokit.pulls.merge({ ...repoDeets, pull_number: pr.number });
+}
 
-// /**
-//  * Taking a set of files and finding the set of common denominator folders
-//  * @param {string[]} strings 
-//  */
-// const getPossibleRootsForFolders = (strings) => {
-//   const dirs = strings.map(s => dirname(s))
-//   const roots = sharedCommonSubstring(dirs)
-//   if (roots === "/") return ["/"]
+function getFilesNotOwnedByCodeOwner(owner, files, cwd) {
+  const filesWhichArentOwned = []
+  const codeowners = new Codeowners(cwd);
   
-//   const possibleOptions = roots.split("/").map(r => `/${r}`)
+  for (const file of files) {
+    let owners = codeowners.getOwner(file);
+    console.log(owners)
+    if (!owners.includes(owner)) {
+      filesWhichArentOwned.push(file)
+    }
+  }
 
-//   return possibleOptions.filter(p => {
-//     if (p === "/") return true
-//     // See if any of the strings have /path/to/the/folder in it
-//     return strings.find(s => s.startsWith(p + "/"))
-//   })
-// }
+  return filesWhichArentOwned
+}
 
-// // https://stackoverflow.com/questions/1916218/find-the-longest-common-starting-substring-in-a-set-of-strings 
-// function sharedCommonSubstring(array){
-//   var A = array.concat().sort(), 
-//   a1= A[0], a2= A[A.length-1], L= a1.length, i= 0;
-//   while(i<L && a1.charAt(i)=== a2.charAt(i)) i++;
-//   return a1.substring(0, i);
-// }
+async function getPRChangedFiles(octokit, repoDeets) {
+  // https://developer.github.com/v3/pulls/#list-pull-requests-files
+  const options = octokit.pulls.listFiles.endpoint.merge(repoDeets);
+  
+  /** @type { import("@octokit/rest").PullsListFilesResponseItem[]} */
+  const files = await octokit.paginate(options)
+  const fileStrings = files.map(f => `/${f.filename}`)
+  return fileStrings
+}
+
+function validate(payload) {
+  if (payload.action !== "review") {
+    throw new Error("This only works on reviews")
+  }
+
+  const review = payload.review
+
+  if (review.state !== "APPROVED"){
+    core.info("Skipping due to this review not being a green")
+    return false
+  }
+
+  const hasAccessRoles = ["COLLABORATOR", "OWNER", "MEMBER"]
+  if (hasAccessRoles.includes(review.author_association)) {
+    core.info("Skipping because review author has write access")
+    // return
+  }
+}
+
 
 // @ts-ignore
 if (!module.parent) {
   run()
+}
+
+module.exports = {
+  getFilesNotOwnedByCodeOwner,
 }

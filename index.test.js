@@ -1,20 +1,11 @@
-const {getPossibleRootsForFolders} = require(".")
+const {getFilesNotOwnedByCodeOwner} = require(".")
 
-test("one file", () =>{
-  expect(getPossibleRootsForFolders(["/file1.txt"])).toEqual(["/"])
-  expect(getPossibleRootsForFolders(["/two/file1.txt"])).toEqual(["/", "/two"])
+// To run these tests, clone https://github.com/orta/test-code-owners-repo
+// and make it a sibling repo
+
+const check = (a, b, c) => expect(getFilesNotOwnedByCodeOwner(a, b, "../test/test-code-owners-repo")).toEqual(c)
+
+test("test code owners", () =>{
+  check("@two", ["root-codeowners/one.two.js"],  [])
 })
 
-test("many files", () =>{
-  expect(getPossibleRootsForFolders(["/two/file1.txt"])).toEqual(["/", "/two"])
-  expect(getPossibleRootsForFolders(["/two/three/four.ts", "/two/thing.js"])).toEqual(["/", "/two"])
-  expect(getPossibleRootsForFolders(["/two/three/four.ts", "/two/three/five.js"])).toEqual(["/", "/two"])
-})
-
-test("always round to real folders ", () =>{
-  expect(getPossibleRootsForFolders(["/three/three/four.ts", "/two/thing.js"])).toEqual(["/"])
-})
-
-test("always round to real folders to the  to the ", () =>{
-  expect(getPossibleRootsForFolders(["/two/three/four.ts", "/two/thre"])).toEqual(["/", "/two"])
-})
