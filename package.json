@@ -1,0 +1,16 @@
+{
+  "name": "code-organizer-merge-on-green",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "test": "npx jest"
+  },
+  "dependencies": {
+    "@actions/core": "^1.1.1",
+    "@actions/github": "^1.1.0",
+    "@octokit/webhooks": "^6.3.0",
+    "@types/jest": "^24.0.18",
+    "codeowners": "^4.1.1"
+  }
+}

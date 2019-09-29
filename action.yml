@@ -1,0 +1,6 @@
+name: 'Code Owner Merge on Green '
+description: 'Let a review from a code-owner trigger a merge if all the changes are in their'
+author: 'Orta Therox'
+runs:
+  using: 'node12'
+  main: 'index.js'
