@@ -110,7 +110,11 @@ function validate(payload) {
 
 // @ts-ignore
 if (!module.parent) {
-  run()
+  try {
+    run()
+  } catch (error) {
+    core.setFailed(error.message)
+  }
 }
 
 module.exports = {
