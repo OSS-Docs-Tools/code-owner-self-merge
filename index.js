@@ -15,18 +15,18 @@ async function run() {
 
   for (const pr of searchResponse.search.nodes) {
     core.info(`\n\nLooking at PR: ${pr.title}`)
-
+    
     // PR = { title: string, number: number, reviews: { nodes: { author: {login: string }[] } }
     console.log(pr)
-
+    
     const changedFiles = await getPRChangedFiles(octokit, repoDeets, pr.number)
-
+    console.log("Checking for "  + JSON.stringify(changedFiles))
+    
     for (const review of pr.reviews.nodes) {
       const reviewer = review.author.login
           
       const hasAccessRoles = ["COLLABORATOR", "OWNER", "MEMBER"]
       const hasAccess = hasAccessRoles.includes(review.author_association)
-
       const filesWhichArentOwned = getFilesNotOwnedByCodeOwner(reviewer, changedFiles)
       if (hasAccess) {
         core.info(`- ${reviewer}: Skipping because they have access to merge`)
@@ -100,6 +100,11 @@ if (!module.parent) {
     throw error
   }
 }
+
+process.on('uncaughtException', function (error) {
+  core.setFailed(error.message)
+})
+
 
 module.exports = {
   getFilesNotOwnedByCodeOwner,
