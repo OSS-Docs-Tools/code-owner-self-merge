@@ -61,7 +61,8 @@ function getFilesNotOwnedByCodeOwner(owner, files, cwd) {
 }
 
 // If you have more than 100 approved + open PRs, you're welcome to make this paginate
-const searchQuery = (repo) => `{
+const searchQuery = (repo) => `
+query Search {
   search(first: 100, query: "repo:${repo}  is:pr is:open review:approved", type: ISSUE) {
     nodes {
       ... on PullRequest {
