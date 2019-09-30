@@ -20,17 +20,22 @@ async function run() {
     // PR = { title: string, number: number, reviews: { nodes: { author: {login: string }[] } }
     console.log(pr)
 
-    const fileStrings = await getPRChangedFiles(octokit, repoDeets, pr.number)
-    
-    const reviewers = pr.reviews.nodes.map(r => r.node.author.login)
-    for (const reviewer of reviewers) {
+    const changedFiles = await getPRChangedFiles(octokit, repoDeets, pr.number)
 
-      const filesWhichArentOwned = getFilesNotOwnedByCodeOwner(reviewer, fileStrings)
+    for (const review of pr.reviews.nodes) {
+      const reviewer = review.author.login
+          
+      const hasAccessRoles = ["COLLABORATOR", "OWNER", "MEMBER"]
+      const hasAccess = hasAccessRoles.includes(review.author_association)
 
-      if (filesWhichArentOwned.length > 0) {
-        core.info("Bailing because not all files were covered by the codeowners for this review")
-        core.info(`Missing: ${filesWhichArentOwned.join(", ")}`)
+      const filesWhichArentOwned = getFilesNotOwnedByCodeOwner(reviewer, changedFiles)
+      if (hasAccess) {
+        core.info(`- ${reviewer}: Skipping because they have access to merge`)
+      } else if (filesWhichArentOwned.length > 0) {
+        core.info(`- ${reviewer}: Bailing because not all files were covered by the codeowners for this review`)
+        core.info(`  Missing: ${filesWhichArentOwned.join(", ")}`)
       } else {
+        core.info(`- ${reviewer}: Accepting as needing to merge`)
         await commentAndMerge(octokit, repoDeets, pr, reviewer);
       }
     }
@@ -59,17 +64,15 @@ function getFilesNotOwnedByCodeOwner(owner, files, cwd) {
 // If you have more than 100 approved + open PRs, you're welcome to make this paginate
 const searchQuery = (repo) => `{
   search(first: 100, query: "repo:${repo}  is:pr is:open review:approved", type: ISSUE) {
-    edges {
-      node {
-        ... on PullRequest {
-          title
-          number
-          reviews(first: 10, states: APPROVED) {
-            nodes {
-              authorAssociation
-              author {
-                login
-              }
+    nodes {
+      ... on PullRequest {
+        title
+        number
+        reviews(first: 10, states: APPROVED) {
+          nodes {
+            authorAssociation
+            author {
+              login
             }
           }
         }
@@ -89,26 +92,13 @@ async function getPRChangedFiles(octokit, repoDeets, prNumber) {
   return fileStrings
 }
 
-function validate(payload) {
-  if (payload.action !== "review") {
-    throw new Error("This only works on reviews")
-  }
-
-  const review = payload.review
-
-  if (review.state !== "APPROVED"){
-    core.info("Skipping due to this review not being a green")
-    return false
-  }
-}
-
-
 // @ts-ignore
 if (!module.parent) {
   try {
     run()
   } catch (error) {
     core.setFailed(error.message)
+    throw error
   }
 }
 
