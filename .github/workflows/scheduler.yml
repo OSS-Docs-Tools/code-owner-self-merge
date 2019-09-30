@@ -15,6 +15,6 @@ jobs:
     - uses: actions/checkout@v1
     - name: Runs this workflow
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SEARCH_GITHUB_TOKEN: ${{ secrets.SEARCH_GITHUB_TOKEN }}
       uses:  orta/code-organizer-merge-on-green@master
 

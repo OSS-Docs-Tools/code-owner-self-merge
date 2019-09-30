@@ -5,7 +5,7 @@ const core = require('@actions/core');
 const Codeowners = require('codeowners');
 
 async function run() {
-  const octokit = new GitHub(process.env.GITHUB_TOKEN);
+  const octokit = new GitHub(process.env.SEARCH_GITHUB_TOKEN);
   
   // const repoDeets = { owner: github.context.repo.owner, repo: github.context.repo.repo }
   const repoDeets = { owner: "facebook", repo: "jest" }
@@ -66,6 +66,7 @@ const searchQuery = (repo) => `{
           number
           reviews(first: 10, states: APPROVED) {
             nodes {
+              authorAssociation
               author {
                 login
               }
@@ -98,12 +99,6 @@ function validate(payload) {
   if (review.state !== "APPROVED"){
     core.info("Skipping due to this review not being a green")
     return false
-  }
-
-  const hasAccessRoles = ["COLLABORATOR", "OWNER", "MEMBER"]
-  if (hasAccessRoles.includes(review.author_association)) {
-    core.info("Skipping because review author has write access")
-    // return
   }
 }
 
