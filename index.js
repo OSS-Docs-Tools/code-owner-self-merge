@@ -51,6 +51,7 @@ function getFilesNotOwnedByCodeOwner(owner, files, cwd) {
   const codeowners = new Codeowners(cwd);
   
   for (const file of files) {
+    console.log(file)
     let owners = codeowners.getOwner(file);
     if (!owners.includes(owner)) {
       filesWhichArentOwned.push(file)
