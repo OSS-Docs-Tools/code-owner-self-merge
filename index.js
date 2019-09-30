@@ -13,8 +13,7 @@ async function run() {
   const query = searchQuery(`${repoDeets.owner}/${repoDeets.repo}`)
   const searchResponse = await octokit.graphql(query, {})
 
-  for (const edge of searchResponse.search.nodes) {
-    const pr = edge.node
+  for (const pr of searchResponse.search.nodes) {
     core.info(`\n\nLooking at PR: ${pr.title}`)
 
     // PR = { title: string, number: number, reviews: { nodes: { author: {login: string }[] } }
