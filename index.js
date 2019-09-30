@@ -7,6 +7,7 @@ const Codeowners = require('codeowners');
 async function run() {
   const token = core.getInput('GITHUB_TOKEN');
   const octokit = new github.GitHub(token);
+  
   // const repoDeets = { owner: github.context.repo.owner, repo: github.context.repo.repo }
   const repoDeets = { owner: "facebook", repo: "jest" }
 
