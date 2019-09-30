@@ -48,7 +48,7 @@ async function commentAndMerge (octokit, repoDeets, pr, reviewer) {
 
 function getFilesNotOwnedByCodeOwner(owner, files, cwd) {
   const filesWhichArentOwned = []
-  const codeowners = new Codeowners(cwd);
+  const codeowners = new Codeowners();
   
   for (const file of files) {
     console.log(file)
