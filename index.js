@@ -1,12 +1,11 @@
 // @ts-check
 
-const github = require('@actions/github');
+const { GitHub } = require('@actions/github')
 const core = require('@actions/core');
 const Codeowners = require('codeowners');
 
 async function run() {
-  const token = core.getInput('GITHUB_TOKEN');
-  const octokit = new github.GitHub(token);
+  const octokit = new GitHub(process.env.GITHUB_TOKEN);
   
   // const repoDeets = { owner: github.context.repo.owner, repo: github.context.repo.repo }
   const repoDeets = { owner: "facebook", repo: "jest" }
