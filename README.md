@@ -26,7 +26,7 @@ packages/typescriptlang-org/src/copy/ja/** @sasurau4 @Quramy @Naturalclar @Takep
 packages/documentation/copy/ja/** @sasurau4 @Quramy @Naturalclar @Takepepe @orta
 ```
 
-This allows any of `@sasurau4`, `@Quramy`,  `@Naturalclar`, `@Takepepe` or `@orta` to merge PRs which affect their areas of the translation process in the TypeScript Website repo.
+This allows any of `@sasurau4`, `@Quramy`,  `@Naturalclar`, `@Takepepe` or `@orta` to merge PRs which affect their areas of the translation process in the TypeScript Website repo. Code owners can use a [review](https://github.com/orta/code-owner-self-merge/pull/3), or a [comment](https://github.com/orta/code-owner-self-merge/pull/1) to merge.
 
 ## Setting It Up
 
@@ -35,8 +35,9 @@ You want a unique workflow file, e.g. `.github/workflows/codeowners-merge.yml`
 ```yml
 name: Codeowners merging
 on:
-  pull_request_target:
+  pull_request_target: { types: opened }
   issue_comment: { types: created }
+  pull_request_review: { types: submitted }
 
 jobs:
   build:
@@ -45,9 +46,9 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Run Codeowners merge check
+        uses:  orta/code-owner-self-merge@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        uses:  orta/code-owner-self-merge@v1
 ```
 
 Then you should be good to go.
@@ -55,5 +56,3 @@ Then you should be good to go.
 ### Security
 
 We force the use of [`pull_request_target`](https://github.blog/2020-08-03-github-actions-improvements-for-fork-and-pull-request-workflows/) as a workflow event to ensure that someone cannot change the CODEOWNER files at the same time as having that change be used to validate if they can merge.
-
-OK
