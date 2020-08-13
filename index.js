@@ -6,19 +6,21 @@ const Codeowners = require('codeowners');
 
 // Effectively the main function
 async function run() {
+  console.log("Starting with ", context)
+
   // Tell folks they can merge
-  if (context.action === "pull_request_target") {
+  if (context.eventName === "pull_request_target") {
     commentOnMergablePRs()
   }
 
   // Merge if they say they have access
-  if (context.action === "issue_comment") {
+  if (context.eventName === "issue_comment") {
     mergeIfLGTMAndHasAccess()
   } 
 }
 
 async function commentOnMergablePRs() {
-  if (context.action !== "pull_request_target") {
+  if (context.eventName !== "pull_request_target") {
     throw new Error("This function can only run when the workflow specifies `pull_request_target` in the `on:`.")
   }
   
@@ -28,11 +30,16 @@ async function commentOnMergablePRs() {
   const pr = context.payload.pull_request
   const thisRepo = { owner: context.repo.owner, repo: context.repo.repo }
 
-  core.info(`\n\nLooking at PR: ${pr.title}`)
+  core.info(`\n\nLooking at PR: '${pr.title}' for codeowners`)
   
   const changedFiles = await getPRChangedFiles(octokit, thisRepo, pr.number)
+  console.log("changed files", changedFiles)
   const codeowners = findCodeOwnersForChangedFiles(changedFiles, cwd)
-  
+  console.log("owners for PR", codeowners)
+
+  const co = new Codeowners(cwd);
+  console.log(co.codeownersFilePath, co.codeownersDirectory)
+
   if (!codeowners.length) {
     console.log("This PR does not have any code-owners")
     process.exit(0)
@@ -69,28 +76,31 @@ ${ourSignature}`
 
 
 async function mergeIfLGTMAndHasAccess() {
-  if (context.action !== "issue_comment") {
+  if (context.eventName !== "issue_comment") {
     throw new Error("This GH action can only run when the workflow specifies `pull_request_target` in the `on:`.")
   }
-
-  const issue = context.payload.issue
-  if (!issue.body.toLowerCase().includes("lgtm")) {
+  console.log("body", context.payload.comment.body.toLowerCase())
+  if (!context.payload.comment.body.toLowerCase().includes("lgtm")) {
     console.log("Comment does not include LGTM ('looks good to me') so not merging")
     process.exit(0)
   }
+  
   
   // Setup
   const cwd = "."
   const octokit = getOctokit(process.env.GITHUB_TOKEN)
   const thisRepo = { owner: context.repo.owner, repo: context.repo.repo }
+  const issue = context.payload.issue
 
-  core.info(`\n\nLooking at PR: ${issue.title}`)
+  core.info(`\n\nLooking at PR: ${issue.title} to see if we can merge`)
   
   const changedFiles = await getPRChangedFiles(octokit, thisRepo, issue.number)
 
-  const filesWhichArentOwned = getFilesNotOwnedByCodeOwner(issue.user.login, changedFiles, cwd)
+  const filesWhichArentOwned = getFilesNotOwnedByCodeOwner("@" + issue.user.login, changedFiles, cwd)
   if (filesWhichArentOwned.length !== 0) {
-    console.log(`${issue.user.login} does not have access to merge`)
+    const missing = new Intl.ListFormat().format(filesWhichArentOwned);
+
+    console.log(`${issue.user.login} does not have access to merge ${missing}`)
     process.exit(0)
   }
 
