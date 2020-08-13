@@ -47,7 +47,7 @@ jobs:
     - name: Run Codeowners merge check
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      uses:  orta/code-organizer-merge-on-green@master
+      uses:  orta/code-owner-self-merge@master
 ```
 
 Then you should be good to go.
