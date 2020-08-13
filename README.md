@@ -1,4 +1,4 @@
-A GitHub action that lets code-owners merge code via GitHub reviews.
+A GitHub action that lets code-owners merge code via GitHub issue comments.
 
 ```yml
 name: Example Workflow
