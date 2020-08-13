@@ -43,11 +43,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1
-    - name: Run Codeowners merge check
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      uses:  orta/code-owner-self-merge@v1
+      - uses: actions/checkout@v1
+      - name: Run Codeowners merge check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses:  orta/code-owner-self-merge@v1
 ```
 
 Then you should be good to go.

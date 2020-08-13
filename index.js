@@ -14,7 +14,7 @@ async function run() {
   }
 
   // Merge if they say they have access
-  if (context.eventName === "issue_comment") {
+  if (context.eventName === "issue_comment" || context.eventName === "pull_request_review") {
     mergeIfLGTMAndHasAccess()
   } 
 }
@@ -33,12 +33,7 @@ async function commentOnMergablePRs() {
   core.info(`\n\nLooking at PR: '${pr.title}' for codeowners`)
   
   const changedFiles = await getPRChangedFiles(octokit, thisRepo, pr.number)
-  console.log("changed files", changedFiles)
   const codeowners = findCodeOwnersForChangedFiles(changedFiles, cwd)
-  console.log("owners for PR", codeowners)
-
-  const co = new Codeowners(cwd);
-  console.log(co.codeownersFilePath, co.codeownersDirectory)
 
   if (!codeowners.length) {
     console.log("This PR does not have any code-owners")
@@ -50,7 +45,7 @@ async function commentOnMergablePRs() {
   codeowners.forEach(owner => {
     const filesWhichArentOwned = getFilesNotOwnedByCodeOwner(owner, changedFiles, cwd)
     if (filesWhichArentOwned.length === 0) ownersWhoHaveAccessToAllFilesInPR.push(owner)
-  });
+  })
 
   if(!ownersWhoHaveAccessToAllFilesInPR.length) {
     console.log("This PR does not have any code-owners who own all of the files in the PR")
@@ -76,11 +71,12 @@ ${ourSignature}`
 
 
 async function mergeIfLGTMAndHasAccess() {
-  if (context.eventName !== "issue_comment") {
+  if (context.eventName !== "issue_comment" && context.eventName !== "pull_request_review") {
     throw new Error("This GH action can only run when the workflow specifies `pull_request_target` in the `on:`.")
   }
-  console.log("body", context.payload.comment.body.toLowerCase())
-  if (!context.payload.comment.body.toLowerCase().includes("lgtm")) {
+
+  const body = context.payload.comment ? context.payload.comment.body : context.payload.review.body
+  if (!body.toLowerCase().includes("lgtm")) {
     console.log("Comment does not include LGTM ('looks good to me') so not merging")
     process.exit(0)
   }
@@ -90,13 +86,13 @@ async function mergeIfLGTMAndHasAccess() {
   const cwd = "."
   const octokit = getOctokit(process.env.GITHUB_TOKEN)
   const thisRepo = { owner: context.repo.owner, repo: context.repo.repo }
-  const issue = context.payload.issue
+  const issue = context.payload.issue || context.payload.pull_request
 
   core.info(`\n\nLooking at PR: ${issue.title} to see if we can merge`)
   
   const changedFiles = await getPRChangedFiles(octokit, thisRepo, issue.number)
 
-  const filesWhichArentOwned = getFilesNotOwnedByCodeOwner("@" + issue.user.login, changedFiles, cwd)
+  const filesWhichArentOwned = getFilesNotOwnedByCodeOwner("@" + context.payload.sender.login, changedFiles, cwd)
   if (filesWhichArentOwned.length !== 0) {
     const missing = new Intl.ListFormat().format(filesWhichArentOwned);
 
