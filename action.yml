@@ -1,8 +1,10 @@
 name: 'Code Owner Self Merge'
 description: 'Lets the CODEOWNERS file determine who can merge a PR'
 author: 'Orta Therox'
-icon: git-merge
-color: purple
+
+branding:
+  icon: git-merge
+  color: purple
 
 runs:
   using: 'node12'
