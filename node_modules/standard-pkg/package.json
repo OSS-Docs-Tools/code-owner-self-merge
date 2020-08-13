@@ -1,0 +1,43 @@
+{
+  "name": "standard-pkg",
+  "version": "0.5.0",
+  "license": "MIT",
+  "bin": {
+    "standard-pkg": "dist-node/index.bin.js"
+  },
+  "files": [
+    "dist-*/",
+    "bin/"
+  ],
+  "pika": true,
+  "sideEffects": false,
+  "repository": {
+    "url": "https://github.com/pikapkg/stdpkg"
+  },
+  "dependencies": {
+    "@babel/core": "^7.2.2",
+    "@babel/parser": "^7.1.5",
+    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
+    "@babel/plugin-syntax-import-meta": "^7.2.0",
+    "@babel/preset-typescript": "^7.1.0",
+    "@babel/traverse": "^7.1.5",
+    "@pika/babel-plugin-esm-import-rewrite": "^0.6.1",
+    "@types/minimist": "^1.2.0",
+    "chalk": "^2.1.0",
+    "glob": "^7.1.1",
+    "minimist": "^1.2.0",
+    "mkdirp": "^0.5.1"
+  },
+  "devDependencies": {
+    "@pika/pack": "^0.5.0",
+    "@pika/plugin-build-node": "^0.6.1",
+    "@pika/plugin-simple-bin": "^0.6.1",
+    "@pika/plugin-ts-standard-pkg": "^0.6.1",
+    "@types/node": "^12.7.11",
+    "prettier": "^1.18.2",
+    "typescript": "^3.6.3"
+  },
+  "source": "dist-src/index.js",
+  "types": "dist-types/index.d.ts",
+  "main": "dist-node/index.js"
+}

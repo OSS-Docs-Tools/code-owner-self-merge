@@ -7,10 +7,10 @@
     "test": "npx jest"
   },
   "dependencies": {
-    "@actions/core": "^1.1.1",
-    "@actions/github": "^1.1.0",
-    "@octokit/webhooks": "^6.3.0",
-    "@types/jest": "^24.0.18",
-    "codeowners": "^4.1.1"
+    "@actions/core": "^1.2.4",
+    "@actions/github": "^4.0.0",
+    "@octokit/webhooks": "^7.9.3",
+    "@types/jest": "^26.0.9",
+    "codeowners": "^4.2.0"
   }
 }

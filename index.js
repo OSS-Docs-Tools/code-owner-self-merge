@@ -1,57 +1,108 @@
 // @ts-check
 
-const { GitHub } = require('@actions/github')
+const { context, getOctokit } = require('@actions/github')
 const core = require('@actions/core');
 const Codeowners = require('codeowners');
 
+// Effectively the main function
 async function run() {
-  const octokit = new GitHub(process.env.SEARCH_GITHUB_TOKEN);
-  
-  // const repoDeets = { owner: github.context.repo.owner, repo: github.context.repo.repo }
-  const repoDeets = { owner: "facebook", repo: "jest" }
+  // Tell folks they can merge
+  if (context.action === "pull_request_target") {
+    commentOnMergablePRs()
+  }
 
-  const query = searchQuery(`${repoDeets.owner}/${repoDeets.repo}`)
-  const searchResponse = await octokit.graphql(query, {})
-
-  for (const pr of searchResponse.search.nodes) {
-    core.info(`\n\nLooking at PR: ${pr.title}`)
-    
-    // PR = { title: string, number: number, reviews: { nodes: { author: {login: string }[] } }
-    console.log(pr)
-    
-    const changedFiles = await getPRChangedFiles(octokit, repoDeets, pr.number)
-    console.log("Checking for "  + JSON.stringify(changedFiles))
-    
-    for (const review of pr.reviews.nodes) {
-      const reviewer = review.author.login
-          
-      const hasAccessRoles = ["COLLABORATOR", "OWNER", "MEMBER"]
-      const hasAccess = hasAccessRoles.includes(review.author_association)
-      const filesWhichArentOwned = getFilesNotOwnedByCodeOwner(reviewer, changedFiles)
-      if (hasAccess) {
-        core.info(`- ${reviewer}: Skipping because they have access to merge`)
-      } else if (filesWhichArentOwned.length > 0) {
-        core.info(`- ${reviewer}: Bailing because not all files were covered by the codeowners for this review`)
-        core.info(`  Missing: ${filesWhichArentOwned.join(", ")}`)
-      } else {
-        core.info(`- ${reviewer}: Accepting as needing to merge`)
-        await commentAndMerge(octokit, repoDeets, pr, reviewer);
-      }
-    }
-  };
+  // Merge if they say they have access
+  if (context.action === "issue_comment") {
+    mergeIfLGTMAndHasAccess()
+  } 
 }
 
-async function commentAndMerge (octokit, repoDeets, pr, reviewer) {
-  await octokit.issues.createComment({ ...repoDeets, issue_number: pr.number, body: `Merging because @${reviewer} is a code-owner of all the changes - thanks!` });
-  await octokit.pulls.merge({ ...repoDeets, pull_number: pr.number });
+async function commentOnMergablePRs() {
+  if (context.action !== "pull_request_target") {
+    throw new Error("This function can only run when the workflow specifies `pull_request_target` in the `on:`.")
+  }
+  
+  // Setup
+  const cwd = "."
+  const octokit = getOctokit(process.env.GITHUB_TOKEN)
+  const pr = context.payload.pull_request
+  const thisRepo = { owner: context.repo.owner, repo: context.repo.repo }
+
+  core.info(`\n\nLooking at PR: ${pr.title}`)
+  
+  const changedFiles = await getPRChangedFiles(octokit, thisRepo, pr.number)
+  const codeowners = findCodeOwnersForChangedFiles(changedFiles, cwd)
+  
+  if (!codeowners.length) {
+    console.log("This PR does not have any code-owners")
+    process.exit(0)
+  }
+
+  // Determine who has access to merge every file in this PR
+  const ownersWhoHaveAccessToAllFilesInPR = []
+  codeowners.forEach(owner => {
+    const filesWhichArentOwned = getFilesNotOwnedByCodeOwner(owner, changedFiles, cwd)
+    if (filesWhichArentOwned.length === 0) ownersWhoHaveAccessToAllFilesInPR.push(owner)
+  });
+
+  if(!ownersWhoHaveAccessToAllFilesInPR.length) {
+    console.log("This PR does not have any code-owners who own all of the files in the PR")
+    process.exit(0)
+  }
+
+  const ourSignature = "<!-- Message About Merging -->"
+  const comments = await octokit.issues.listComments({ ...thisRepo, issue_number: pr.number })
+  const existingComment = comments.data.find(c => c.body.includes(ourSignature))
+  if (existingComment) {
+    console.log("There is an existing comment")
+    process.exit(0)
+  }
+
+  const owners = new Intl.ListFormat().format(ownersWhoHaveAccessToAllFilesInPR);
+  const message = `Thanks for the PR! 
+
+This section of the codebase is owner by ${owners} - if they write a comment saying "LGTM" then it will be merged.
+${ourSignature}`
+
+  await octokit.issues.createComment({ ...thisRepo, issue_number: pr.number, body: message });
+}
+
+
+async function mergeIfLGTMAndHasAccess() {
+  if (context.action !== "issue_comment") {
+    throw new Error("This GH action can only run when the workflow specifies `pull_request_target` in the `on:`.")
+  }
+
+  const issue = context.payload.issue
+  if (!issue.body.toLowerCase().includes("lgtm")) {
+    console.log("Comment does not include LGTM ('looks good to me') so not merging")
+    process.exit(0)
+  }
+  
+  // Setup
+  const cwd = "."
+  const octokit = getOctokit(process.env.GITHUB_TOKEN)
+  const thisRepo = { owner: context.repo.owner, repo: context.repo.repo }
+
+  core.info(`\n\nLooking at PR: ${issue.title}`)
+  
+  const changedFiles = await getPRChangedFiles(octokit, thisRepo, issue.number)
+
+  const filesWhichArentOwned = getFilesNotOwnedByCodeOwner(issue.user.login, changedFiles, cwd)
+  if (filesWhichArentOwned.length !== 0) {
+    console.log(`${issue.user.login} does not have access to merge`)
+    process.exit(0)
+  }
+
+  await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Merging because @${issue.user.login} is a code-owner of all the changes - thanks!` });
+  await octokit.pulls.merge({ ...thisRepo, pull_number: issue.number });
 }
 
 function getFilesNotOwnedByCodeOwner(owner, files, cwd) {
   const filesWhichArentOwned = []
-  const codeowners = new Codeowners();
+  const codeowners = new Codeowners(cwd);
   
   for (const file of files) {
-    console.log(file)
     let owners = codeowners.getOwner(file);
     if (!owners.includes(owner)) {
       filesWhichArentOwned.push(file)
@@ -61,27 +112,17 @@ function getFilesNotOwnedByCodeOwner(owner, files, cwd) {
   return filesWhichArentOwned
 }
 
-// If you have more than 100 approved + open PRs, you're welcome to make this paginate
-const searchQuery = (repo) => `
-query Search {
-  search(first: 100, query: "repo:${repo}  is:pr is:open review:approved", type: ISSUE) {
-    nodes {
-      ... on PullRequest {
-        title
-        number
-        reviews(first: 10, states: APPROVED) {
-          nodes {
-            authorAssociation
-            author {
-              login
-            }
-          }
-        }
-      }
-    }
+function findCodeOwnersForChangedFiles(changedFiles, cwd)  {
+  const owners = new Set()
+  const codeowners = new Codeowners(cwd);
+  
+  for (const file of changedFiles) {
+    const filesOwners = codeowners.getOwner(file);
+    filesOwners.forEach(o => owners.add(o))
   }
-}`
 
+  return Array.from(owners)
+}
 
 async function getPRChangedFiles(octokit, repoDeets, prNumber) {
   // https://developer.github.com/v3/pulls/#list-pull-requests-files
@@ -93,6 +134,15 @@ async function getPRChangedFiles(octokit, repoDeets, prNumber) {
   return fileStrings
 }
 
+process.on('uncaughtException', function (error) {
+  core.setFailed(error.message)
+})
+
+module.exports = {
+  getFilesNotOwnedByCodeOwner,
+  findCodeOwnersForChangedFiles
+}
+
 // @ts-ignore
 if (!module.parent) {
   try {
@@ -101,13 +151,4 @@ if (!module.parent) {
     core.setFailed(error.message)
     throw error
   }
-}
-
-process.on('uncaughtException', function (error) {
-  core.setFailed(error.message)
-})
-
-
-module.exports = {
-  getFilesNotOwnedByCodeOwner,
 }
