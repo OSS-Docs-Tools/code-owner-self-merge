@@ -117,7 +117,8 @@ function getFilesNotOwnedByCodeOwner(owner, files, cwd) {
   const codeowners = new Codeowners(cwd);
   
   for (const file of files) {
-    let owners = codeowners.getOwner(file);
+    const relative = file.startsWith("/") ? file.slice(1) : file
+    let owners = codeowners.getOwner(relative);
     if (!owners.includes(owner)) {
       filesWhichArentOwned.push(file)
     }
@@ -128,12 +129,13 @@ function getFilesNotOwnedByCodeOwner(owner, files, cwd) {
 
 function listFilesWithOwners(files, cwd) {
   const codeowners = new Codeowners(cwd);
-  console.log("Known code-owners for changed files:")
+  console.log("\nKnown code-owners for changed files:")
   for (const file of files) {
-    let owners = codeowners.getOwner(file);
+    const relative = file.startsWith("/") ? file.slice(1) : file
+    let owners = codeowners.getOwner(relative);
     console.log(`- ${file} (${new Intl.ListFormat().format(owners)})`)
   }
-  console.log("> CODEOWNERS file:")
+  console.log("\n> CODEOWNERS file:")
   console.log(readFileSync(codeowners.codeownersFilePath, "utf8"))
 }
 
@@ -142,7 +144,8 @@ function findCodeOwnersForChangedFiles(changedFiles, cwd)  {
   const codeowners = new Codeowners(cwd);
   
   for (const file of changedFiles) {
-    const filesOwners = codeowners.getOwner(file);
+    const relative = file.startsWith("/") ? file.slice(1) : file
+    const filesOwners = codeowners.getOwner(relative);
     filesOwners.forEach(o => owners.add(o))
   }
 
