@@ -30,16 +30,16 @@ async function commentOnMergablePRs() {
   const pr = context.payload.pull_request
   const thisRepo = { owner: context.repo.owner, repo: context.repo.repo }
 
-  core.info(`\n\nLooking at PR: '${pr.title}' to see if the changed files all fit inside one set of codeowners to make a comment`)
+  core.info(`\n\nLooking at PR: '${pr.title}' to see if the changed files all fit inside one set of code-owners to make a comment`)
   
   const co = new Codeowners(cwd);
-  core.info(`Codeowners file found at: ${co.codeownersFilePath}`)
+  core.info(`Code-owners file found at: ${co.codeownersFilePath}`)
 
   const changedFiles = await getPRChangedFiles(octokit, thisRepo, pr.number)
   core.info(`Changed files: \n\n - ${changedFiles.join("\n - ")}`)
 
   const codeowners = findCodeOwnersForChangedFiles(changedFiles, cwd)
-  core.info(`Codeowners: \n\n - ${changedFiles.join("\n - ")}`)
+  core.info(`Code-owners: \n\n - ${changedFiles.join("\n - ")}`)
 
   if (!codeowners.length) {
     console.log("This PR does not have any code-owners")
