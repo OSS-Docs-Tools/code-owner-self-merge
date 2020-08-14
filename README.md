@@ -56,3 +56,11 @@ Then you should be good to go.
 ### Security
 
 We force the use of [`pull_request_target`](https://github.blog/2020-08-03-github-actions-improvements-for-fork-and-pull-request-workflows/) as a workflow event to ensure that someone cannot change the CODEOWNER files at the same time as having that change be used to validate if they can merge.
+
+### Dev
+
+Use `npx jest --watch` to run tests.
+
+### Deploy
+
+Use the GH UI to make a tag and release

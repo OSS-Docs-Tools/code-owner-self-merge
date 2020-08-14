@@ -39,7 +39,7 @@ async function commentOnMergablePRs() {
   core.info(`Changed files: \n\n - ${changedFiles.join("\n - ")}`)
 
   const codeowners = findCodeOwnersForChangedFiles(changedFiles, cwd)
-  core.info(`Code-owners: \n\n - ${changedFiles.join("\n - ")}`)
+  core.info(`Code-owners: \n\n - ${codeowners.join("\n - ")}`)
 
   if (!codeowners.length) {
     console.log("This PR does not have any code-owners")
@@ -128,6 +128,7 @@ function getFilesNotOwnedByCodeOwner(owner, files, cwd) {
 function findCodeOwnersForChangedFiles(changedFiles, cwd)  {
   const owners = new Set()
   const codeowners = new Codeowners(cwd);
+  console.log(cwd, codeowners.codeownersFilePath)
   
   for (const file of changedFiles) {
     const filesOwners = codeowners.getOwner(file);
