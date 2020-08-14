@@ -96,13 +96,11 @@ async function mergeIfLGTMAndHasAccess() {
   core.info(`\n\nLooking at PR: '${issue.title}' to see if we can merge`)
   
   const changedFiles = await getPRChangedFiles(octokit, thisRepo, issue.number)
-  core.info(`Changed files: \n\n - ${changedFiles.join("\n - ")}`)
+  core.info(`Changed files: \n - ${changedFiles.join("\n - ")}`)
 
   const filesWhichArentOwned = getFilesNotOwnedByCodeOwner("@" + context.payload.sender.login, changedFiles, cwd)
   if (filesWhichArentOwned.length !== 0) {
-    const missing = new Intl.ListFormat().format(filesWhichArentOwned);
-
-    console.log(`${issue.user.login} does not have access to merge ${missing}`)
+    console.log(`@${context.payload.sender.login} does not have access to merge \n - ${filesWhichArentOwned.join("\n - ")}`)
     process.exit(0)
   }
 
