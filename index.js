@@ -6,7 +6,7 @@ const Codeowners = require('codeowners');
 
 // Effectively the main function
 async function run() {
-  core.info("Running version 1.0.1")
+  core.info("Running version 1.2.1")
 
   // Tell folks they can merge
   if (context.eventName === "pull_request_target") {
