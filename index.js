@@ -6,7 +6,7 @@ const Codeowners = require('codeowners');
 
 // Effectively the main function
 async function run() {
-  console.log("Starting with ", context)
+  core.info("Running version 1.0.1")
 
   // Tell folks they can merge
   if (context.eventName === "pull_request_target") {
@@ -30,10 +30,16 @@ async function commentOnMergablePRs() {
   const pr = context.payload.pull_request
   const thisRepo = { owner: context.repo.owner, repo: context.repo.repo }
 
-  core.info(`\n\nLooking at PR: '${pr.title}' for codeowners`)
+  core.info(`\n\nLooking at PR: '${pr.title}' to see if the changed files all fit inside one set of codeowners to make a comment`)
   
+  const co = new Codeowners(cwd);
+  core.info(`Codeowners file found at: ${co.codeownersFilePath}`)
+
   const changedFiles = await getPRChangedFiles(octokit, thisRepo, pr.number)
+  core.info(`Changed files: \n\n - ${changedFiles.join("\n - ")}`)
+
   const codeowners = findCodeOwnersForChangedFiles(changedFiles, cwd)
+  core.info(`Codeowners: \n\n - ${changedFiles.join("\n - ")}`)
 
   if (!codeowners.length) {
     console.log("This PR does not have any code-owners")
@@ -81,16 +87,16 @@ async function mergeIfLGTMAndHasAccess() {
     process.exit(0)
   }
   
-  
   // Setup
   const cwd = "."
   const octokit = getOctokit(process.env.GITHUB_TOKEN)
   const thisRepo = { owner: context.repo.owner, repo: context.repo.repo }
   const issue = context.payload.issue || context.payload.pull_request
 
-  core.info(`\n\nLooking at PR: ${issue.title} to see if we can merge`)
+  core.info(`\n\nLooking at PR: '${issue.title}' to see if we can merge`)
   
   const changedFiles = await getPRChangedFiles(octokit, thisRepo, issue.number)
+  core.info(`Changed files: \n\n - ${changedFiles.join("\n - ")}`)
 
   const filesWhichArentOwned = getFilesNotOwnedByCodeOwner("@" + context.payload.sender.login, changedFiles, cwd)
   if (filesWhichArentOwned.length !== 0) {
@@ -100,6 +106,7 @@ async function mergeIfLGTMAndHasAccess() {
     process.exit(0)
   }
 
+  core.info(`Creating comments and merging`)
   await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Merging because @${issue.user.login} is a code-owner of all the changes - thanks!` });
   await octokit.pulls.merge({ ...thisRepo, pull_number: issue.number });
 }
