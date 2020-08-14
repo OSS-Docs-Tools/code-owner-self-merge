@@ -92,20 +92,21 @@ async function mergeIfLGTMAndHasAccess() {
   const octokit = getOctokit(process.env.GITHUB_TOKEN)
   const thisRepo = { owner: context.repo.owner, repo: context.repo.repo }
   const issue = context.payload.issue || context.payload.pull_request
+  const sender = context.payload.sender.login
 
-  core.info(`\n\nLooking at PR: '${issue.title}' to see if we can merge`)
+  core.info(`\n\nLooking at the ${context.eventName} from ${sender} in '${issue.title}' to see if we can merge`)
   
   const changedFiles = await getPRChangedFiles(octokit, thisRepo, issue.number)
   core.info(`Changed files: \n - ${changedFiles.join("\n - ")}`)
 
-  const filesWhichArentOwned = getFilesNotOwnedByCodeOwner("@" + context.payload.sender.login, changedFiles, cwd)
+  const filesWhichArentOwned = getFilesNotOwnedByCodeOwner("@" + sender, changedFiles, cwd)
   if (filesWhichArentOwned.length !== 0) {
-    console.log(`@${context.payload.sender.login} does not have access to merge \n - ${filesWhichArentOwned.join("\n - ")}`)
+    console.log(`@${sender} does not have access to merge \n - ${filesWhichArentOwned.join("\n - ")}`)
     process.exit(0)
   }
 
   core.info(`Creating comments and merging`)
-  await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Merging because @${issue.user.login} is a code-owner of all the changes - thanks!` });
+  await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Merging because @${sender} is a code-owner of all the changes - thanks!` });
   await octokit.pulls.merge({ ...thisRepo, pull_number: issue.number });
 }
 
