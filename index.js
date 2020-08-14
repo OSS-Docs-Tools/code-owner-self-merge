@@ -6,7 +6,7 @@ const Codeowners = require('codeowners');
 
 // Effectively the main function
 async function run() {
-  core.info("Running version 1.2.1")
+  core.info("Running version 1.2.2")
 
   // Tell folks they can merge
   if (context.eventName === "pull_request_target") {
@@ -30,16 +30,16 @@ async function commentOnMergablePRs() {
   const pr = context.payload.pull_request
   const thisRepo = { owner: context.repo.owner, repo: context.repo.repo }
 
-  core.info(`\n\nLooking at PR: '${pr.title}' to see if the changed files all fit inside one set of code-owners to make a comment`)
+  core.info(`\nLooking at PR: '${pr.title}' to see if the changed files all fit inside one set of code-owners to make a comment`)
   
   const co = new Codeowners(cwd);
   core.info(`Code-owners file found at: ${co.codeownersFilePath}`)
 
   const changedFiles = await getPRChangedFiles(octokit, thisRepo, pr.number)
-  core.info(`Changed files: \n\n - ${changedFiles.join("\n - ")}`)
+  core.info(`Changed files: \n - ${changedFiles.join("\n - ")}`)
 
   const codeowners = findCodeOwnersForChangedFiles(changedFiles, cwd)
-  core.info(`Code-owners: \n\n - ${codeowners.join("\n - ")}`)
+  core.info(`Code-owners: \n - ${codeowners.join("\n - ")}`)
 
   if (!codeowners.length) {
     console.log("This PR does not have any code-owners")
@@ -55,6 +55,7 @@ async function commentOnMergablePRs() {
 
   if(!ownersWhoHaveAccessToAllFilesInPR.length) {
     console.log("This PR does not have any code-owners who own all of the files in the PR")
+    listFilesWithOwners(changedFiles, cwd)
     process.exit(0)
   }
 
@@ -74,7 +75,6 @@ ${ourSignature}`
 
   await octokit.issues.createComment({ ...thisRepo, issue_number: pr.number, body: message });
 }
-
 
 async function mergeIfLGTMAndHasAccess() {
   if (context.eventName !== "issue_comment" && context.eventName !== "pull_request_review") {
@@ -101,7 +101,8 @@ async function mergeIfLGTMAndHasAccess() {
 
   const filesWhichArentOwned = getFilesNotOwnedByCodeOwner("@" + sender, changedFiles, cwd)
   if (filesWhichArentOwned.length !== 0) {
-    console.log(`@${sender} does not have access to merge \n - ${filesWhichArentOwned.join("\n - ")}`)
+    console.log(`@${sender} does not have access to merge \n - ${filesWhichArentOwned.join("\n - ")}\n`)
+    listFilesWithOwners(changedFiles, cwd)
     process.exit(0)
   }
 
@@ -122,6 +123,15 @@ function getFilesNotOwnedByCodeOwner(owner, files, cwd) {
   }
 
   return filesWhichArentOwned
+}
+
+function listFilesWithOwners(files, cwd) {
+  const codeowners = new Codeowners(cwd);
+  
+  for (const file of files) {
+    let owners = codeowners.getOwner(file);
+    console.log(`- ${file} (${new Intl.ListFormat().format(owners)})`)
+  }
 }
 
 function findCodeOwnersForChangedFiles(changedFiles, cwd)  {
