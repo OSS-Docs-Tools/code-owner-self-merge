@@ -3,6 +3,7 @@
 const { context, getOctokit } = require('@actions/github')
 const core = require('@actions/core');
 const Codeowners = require('codeowners');
+const {readFileSync} = require("fs")
 
 // Effectively the main function
 async function run() {
@@ -127,17 +128,18 @@ function getFilesNotOwnedByCodeOwner(owner, files, cwd) {
 
 function listFilesWithOwners(files, cwd) {
   const codeowners = new Codeowners(cwd);
-  
+  console.log("Known code-owners for changed files:")
   for (const file of files) {
     let owners = codeowners.getOwner(file);
     console.log(`- ${file} (${new Intl.ListFormat().format(owners)})`)
   }
+  console.log("> CODEOWNERS file:")
+  console.log(readFileSync(codeowners.codeownersFilePath, "utf8"))
 }
 
 function findCodeOwnersForChangedFiles(changedFiles, cwd)  {
   const owners = new Set()
   const codeowners = new Codeowners(cwd);
-  console.log(cwd, codeowners.codeownersFilePath)
   
   for (const file of changedFiles) {
     const filesOwners = codeowners.getOwner(file);
