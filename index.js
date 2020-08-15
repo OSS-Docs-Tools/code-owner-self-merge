@@ -71,7 +71,7 @@ async function commentOnMergablePRs() {
   const owners = new Intl.ListFormat().format(ownersWhoHaveAccessToAllFilesInPR);
   const message = `Thanks for the PR! 
 
-This section of the codebase is owner by ${owners} - if they write a comment saying "LGTM" then it will be merged.
+This section of the codebase is owned by ${owners} - if they write a comment saying "LGTM" then it will be merged.
 ${ourSignature}`
 
   await octokit.issues.createComment({ ...thisRepo, issue_number: pr.number, body: message });
