@@ -22,10 +22,10 @@ Then, when/if this happens the GitHub Action will merge for you.
 
 ```sh
 # Collaborators for Japanese Translation of the Website
-packages/playground-examples/copy/ja/** @sasurau4 @Quramy @Naturalclar @Takepepe @orta
-packages/tsconfig-reference/copy/ja/** @sasurau4 @Quramy @Naturalclar @Takepepe @orta
-packages/typescriptlang-org/src/copy/ja/** @sasurau4 @Quramy @Naturalclar @Takepepe @orta
-packages/documentation/copy/ja/** @sasurau4 @Quramy @Naturalclar @Takepepe @orta
+packages/playground-examples/copy/ja/**/*.md @sasurau4 @Quramy @Naturalclar @Takepepe @orta
+packages/tsconfig-reference/copy/ja/**/*.md @sasurau4 @Quramy @Naturalclar @Takepepe @orta
+packages/typescriptlang-org/src/copy/ja/**/*.md @sasurau4 @Quramy @Naturalclar @Takepepe @orta
+packages/documentation/copy/ja/**/*.ts @sasurau4 @Quramy @Naturalclar @Takepepe @orta
 ```
 
 This allows any of `@sasurau4`, `@Quramy`,  `@Naturalclar`, `@Takepepe` or `@orta` to merge PRs which affect their areas of the translation process in the TypeScript Website repo. Code owners can use a [review](https://github.com/orta/code-owner-self-merge/pull/3), or a [comment](https://github.com/orta/code-owner-self-merge/pull/1) to merge.
