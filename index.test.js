@@ -14,6 +14,12 @@ test("real world", () => {
   expect(filesNotInCodeowners).toEqual(["@khaosdoctor", "@danilofuchs", "@orta"]);
 });
 
+test("real world 2", () => {
+  const changed = ["/packages/typescriptlang-org/src/copy/pt/index.ts", "/packages/typescriptlang-org/src/copy/pt/nav.ts"];
+  const filesNotInCodeowners = findCodeOwnersForChangedFiles(changed, ".");
+  expect(filesNotInCodeowners).toEqual(["@khaosdoctor", "@danilofuchs", "@orta"]);
+});
+
 test("deciding if someone has access to merge", () => {
   const noFiles = getFilesNotOwnedByCodeOwner("@two", ["root-codeowners/one.two.js"], "./test-code-owners-repo");
   expect(noFiles).toEqual([]);
@@ -21,3 +27,4 @@ test("deciding if someone has access to merge", () => {
   const filesNotInCodeowners = getFilesNotOwnedByCodeOwner("@two", ["random-path/file.ts"], "./test-code-owners-repo");
   expect(filesNotInCodeowners).toEqual(["random-path/file.ts"]);
 });
+
