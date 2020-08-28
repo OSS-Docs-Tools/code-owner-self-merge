@@ -7,7 +7,7 @@ const {readFileSync} = require("fs")
 
 // Effectively the main function
 async function run() {
-  core.info("Running version 1.3.1")
+  core.info("Running version 1.3.2")
 
   // Tell folks they can merge
   if (context.eventName === "pull_request_target") {
@@ -40,7 +40,8 @@ async function commentOnMergablePRs() {
   core.info(`Changed files: \n - ${changedFiles.join("\n - ")}`)
 
   const codeowners = findCodeOwnersForChangedFiles(changedFiles, cwd)
-  core.info(`Code-owners: \n - ${codeowners.join("\n - ")}`)
+  core.info(`Code-owners: \n - ${codeowners.users.join("\n - ")}`)
+  core.info(`Labels: \n - ${codeowners.labels.join("\n - ")}`)
 
   if (!codeowners.length) {
     console.log("This PR does not have any code-owners")
@@ -49,7 +50,7 @@ async function commentOnMergablePRs() {
 
   // Determine who has access to merge every file in this PR
   const ownersWhoHaveAccessToAllFilesInPR = []
-  codeowners.forEach(owner => {
+  codeowners.users.forEach(owner => {
     const filesWhichArentOwned = getFilesNotOwnedByCodeOwner(owner, changedFiles, cwd)
     if (filesWhichArentOwned.length === 0) ownersWhoHaveAccessToAllFilesInPR.push(owner)
   })
@@ -75,6 +76,12 @@ This section of the codebase is owned by ${owners} - if they write a comment say
 ${ourSignature}`
 
   await octokit.issues.createComment({ ...thisRepo, issue_number: pr.number, body: message });
+
+  // Add labels
+  for (const label of codeowners.labels) {
+    const labelConfig = { name: label, color: Math.random().toString(16).slice(2, 8) }
+    await  createOrAddLabel(octokit, { ...thisRepo, id: pr.number }, labelConfig)
+  }
 }
 
 async function mergeIfLGTMAndHasAccess() {
@@ -108,8 +115,12 @@ async function mergeIfLGTMAndHasAccess() {
   }
 
   core.info(`Creating comments and merging`)
-  await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Merging because @${sender} is a code-owner of all the changes - thanks!` });
-  await octokit.pulls.merge({ ...thisRepo, pull_number: issue.number });
+  try {
+    await octokit.pulls.merge({ ...thisRepo, pull_number: issue.number });
+    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Merging because @${sender} is a code-owner of all the changes - thanks!` });
+  } catch (error) {
+    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Looks good to merge, thanks ${sender}.` });
+  }
 }
 
 function getFilesNotOwnedByCodeOwner(owner, files, cwd) {
@@ -141,15 +152,22 @@ function listFilesWithOwners(files, cwd) {
 
 function findCodeOwnersForChangedFiles(changedFiles, cwd)  {
   const owners = new Set()
+  const labels = new Set()
   const codeowners = new Codeowners(cwd);
   
   for (const file of changedFiles) {
     const relative = file.startsWith("/") ? file.slice(1) : file
     const filesOwners = codeowners.getOwner(relative);
-    filesOwners.forEach(o => owners.add(o))
+    filesOwners.forEach(o => {
+      if (o.startsWith("@")) owners.add(o)
+      if (o.startsWith("[")) labels.add(o.slice(1, o.length-1))
+    })
   }
 
-  return Array.from(owners)
+  return  {
+    users: Array.from(owners),
+    labels: Array.from(labels)
+  }
 }
 
 async function getPRChangedFiles(octokit, repoDeets, prNumber) {
@@ -160,6 +178,32 @@ async function getPRChangedFiles(octokit, repoDeets, prNumber) {
   const files = await octokit.paginate(options)
   const fileStrings = files.map(f => `/${f.filename}`)
   return fileStrings
+}
+
+
+
+async function createOrAddLabel(octokit, repoDeets, labelConfig) {
+  let label = null
+    const existingLabels = await octokit.paginate('GET /repos/:owner/:repo/labels', { owner: repoDeets.owner, repo: repoDeets.repo })
+    label = existingLabels.find(l => l.name == labelConfig.name)
+
+  // Create the label if it doesn't exist yet
+  if (!label) {
+    await octokit.issues.createLabel({
+      owner: repoDeets.owner,
+      repo: repoDeets.repo,
+      name: labelConfig.name,
+      color: labelConfig.color,
+      description: labelConfig.description,
+    })
+  }
+
+  await octokit.issues.addLabels({
+    owner: repoDeets.owner,
+    repo: repoDeets.repo,
+    issue_number: repoDeets.id,
+    labels: [labelConfig.name],
+  })
 }
 
 process.on('uncaughtException', function (error) {

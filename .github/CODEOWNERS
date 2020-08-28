@@ -20,11 +20,11 @@ packages/typescriptlang-org/src/copy/pt/**/*.ts @khaosdoctor @danilofuchs  @orta
 packages/documentation/copy/pt/**/*.ts @khaosdoctor @danilofuchs  @orta
 
 # Collaborators for Spanish Translation of the Website
-packages/playground-examples/copy/es/**/*.md @KingDarBoja
-packages/playground-examples/copy/es/**/*.ts @KingDarBoja
-packages/tsconfig-reference/copy/es/**/*.md @KingDarBoja
-packages/typescriptlang-org/src/copy/es/**/*.ts @KingDarBoja
-packages/documentation/copy/es/**/*.ts @KingDarBoja
+packages/playground-examples/copy/es/**/*.md @KingDarBoja [translate] [es]
+packages/playground-examples/copy/es/**/*.ts @KingDarBoja [translate] [es]
+packages/tsconfig-reference/copy/es/**/*.md @KingDarBoja [translate] [es]
+packages/typescriptlang-org/src/copy/es/**/*.ts @KingDarBoja [translate] [es]
+packages/documentation/copy/es/**/*.ts @KingDarBoja [translate] [es]
 
 # Collaborators for Chinese Translation of the Website
 packages/playground-examples/copy/zh/**/*.md @Kingwl
