@@ -115,8 +115,12 @@ async function mergeIfLGTMAndHasAccess() {
   }
 
   core.info(`Creating comments and merging`)
-  await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Merging because @${sender} is a code-owner of all the changes - thanks!` });
-  await octokit.pulls.merge({ ...thisRepo, pull_number: issue.number });
+  try {
+    await octokit.pulls.merge({ ...thisRepo, pull_number: issue.number });
+    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Merging because @${sender} is a code-owner of all the changes - thanks!` });
+  } catch (error) {
+    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Looks good to merge, thanks ${sender}.` });
+  }
 }
 
 function getFilesNotOwnedByCodeOwner(owner, files, cwd) {
