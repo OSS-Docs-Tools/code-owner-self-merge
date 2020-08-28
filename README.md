@@ -59,6 +59,19 @@ Then you should be good to go.
 
 We force the use of [`pull_request_target`](https://github.blog/2020-08-03-github-actions-improvements-for-fork-and-pull-request-workflows/) as a workflow event to ensure that someone cannot change the CODEOWNER files at the same time as having that change be used to validate if they can merge.
 
+### Extras
+
+You can use this label to set labels for specific sections of the codebase, by having square brackets to indicate labels to make: `[label]`
+
+```sh
+# Collaborators for Spanish Translation of the Website
+packages/playground-examples/copy/es/**/*.md @KingDarBoja [translate] [es]
+packages/playground-examples/copy/es/**/*.ts @KingDarBoja [translate] [es]
+packages/tsconfig-reference/copy/es/**/*.md @KingDarBoja [translate] [es]
+packages/typescriptlang-org/src/copy/es/**/*.ts @KingDarBoja [translate] [es]
+packages/documentation/copy/es/**/*.ts @KingDarBoja [translate] [es]
+```
+
 ### Dev
 
 Use `npx jest --watch` to run tests.
