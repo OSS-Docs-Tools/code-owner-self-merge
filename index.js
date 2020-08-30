@@ -7,7 +7,7 @@ const {readFileSync} = require("fs")
 
 // Effectively the main function
 async function run() {
-  core.info("Running version 1.4.0")
+  core.info("Running version 1.4.1")
 
   // Tell folks they can merge
   if (context.eventName === "pull_request_target") {
@@ -43,7 +43,7 @@ async function commentOnMergablePRs() {
   core.info(`Code-owners: \n - ${codeowners.users.join("\n - ")}`)
   core.info(`Labels: \n - ${codeowners.labels.join("\n - ")}`)
 
-  if (!codeowners.length) {
+  if (!codeowners.users.length) {
     console.log("This PR does not have any code-owners")
     process.exit(0)
   }
@@ -55,7 +55,7 @@ async function commentOnMergablePRs() {
     if (filesWhichArentOwned.length === 0) ownersWhoHaveAccessToAllFilesInPR.push(owner)
   })
 
-  if(!ownersWhoHaveAccessToAllFilesInPR.length) {
+  if (!ownersWhoHaveAccessToAllFilesInPR.length) {
     console.log("This PR does not have any code-owners who own all of the files in the PR")
     listFilesWithOwners(changedFiles, cwd)
     process.exit(0)
@@ -85,12 +85,13 @@ ${ourSignature}`
 }
 
 async function mergeIfLGTMAndHasAccess() {
-  if (context.eventName !== "issue_comment" && context.eventName !== "pull_request_review") {
-    throw new Error("This GH action can only run when the workflow specifies `pull_request_target` in the `on:`.")
+  const body = context.payload.comment ? context.payload.comment.body : context.payload.review.body
+  if (!body) { 
+    // For debugging #8
+    console.log(JSON.stringify(context))
   }
 
-  const body = context.payload.comment ? context.payload.comment.body : context.payload.review.body
-  if (!body.toLowerCase().includes("lgtm")) {
+  if (!body || !body.toLowerCase().includes("lgtm")) {
     console.log("Comment does not include LGTM ('looks good to me') so not merging")
     process.exit(0)
   }
