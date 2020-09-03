@@ -124,6 +124,12 @@ async function mergeIfLGTMAndHasAccess() {
   }
 }
 
+/**
+ * 
+ * @param {string} owner 
+ * @param {string[]} files 
+ * @param {string} cwd 
+ */
 function getFilesNotOwnedByCodeOwner(owner, files, cwd) {
   const filesWhichArentOwned = []
   const codeowners = new Codeowners(cwd);
@@ -139,6 +145,11 @@ function getFilesNotOwnedByCodeOwner(owner, files, cwd) {
   return filesWhichArentOwned
 }
 
+/**
+ * 
+ * @param {string[]} files 
+ * @param {string} cwd 
+ */
 function listFilesWithOwners(files, cwd) {
   const codeowners = new Codeowners(cwd);
   console.log("\nKnown code-owners for changed files:")
@@ -181,8 +192,6 @@ async function getPRChangedFiles(octokit, repoDeets, prNumber) {
   return fileStrings
 }
 
-
-
 async function createOrAddLabel(octokit, repoDeets, labelConfig) {
   let label = null
     const existingLabels = await octokit.paginate('GET /repos/:owner/:repo/labels', { owner: repoDeets.owner, repo: repoDeets.repo })
@@ -207,10 +216,6 @@ async function createOrAddLabel(octokit, repoDeets, labelConfig) {
   })
 }
 
-process.on('uncaughtException', function (error) {
-  core.setFailed(error.message)
-})
-
 module.exports = {
   getFilesNotOwnedByCodeOwner,
   findCodeOwnersForChangedFiles
@@ -225,3 +230,11 @@ if (!module.parent) {
     throw error
   }
 }
+
+// Bail correctly
+process.on('uncaughtException', function (err) {
+  core.setFailed(err.message)
+  console.error((new Date).toUTCString() + ' uncaughtException:', err.message)
+  console.error(err.stack)
+  process.exit(1)
+})
