@@ -26,7 +26,7 @@ async function commentOnMergablePRs() {
   }
   
   // Setup
-  const cwd = "."
+  const cwd = process.cwd()
   const octokit = getOctokit(process.env.GITHUB_TOKEN)
   const pr = context.payload.pull_request
   const thisRepo = { owner: context.repo.owner, repo: context.repo.repo }
@@ -97,7 +97,7 @@ async function mergeIfLGTMAndHasAccess() {
   }
   
   // Setup
-  const cwd = "."
+  const cwd = process.cwd()
   const octokit = getOctokit(process.env.GITHUB_TOKEN)
   const thisRepo = { owner: context.repo.owner, repo: context.repo.repo }
   const issue = context.payload.issue || context.payload.pull_request
