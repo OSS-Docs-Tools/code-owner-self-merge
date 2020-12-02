@@ -7,7 +7,7 @@ const {readFileSync} = require("fs")
 
 // Effectively the main function
 async function run() {
-  core.info("Running version 1.4.1")
+  core.info("Running version 1.4.2")
 
   // Tell folks they can merge
   if (context.eventName === "pull_request_target") {
@@ -26,7 +26,7 @@ async function commentOnMergablePRs() {
   }
   
   // Setup
-  const cwd = process.cwd()
+  const cwd = core.getInput('cwd') || process.cwd()
   const octokit = getOctokit(process.env.GITHUB_TOKEN)
   const pr = context.payload.pull_request
   const thisRepo = { owner: context.repo.owner, repo: context.repo.repo }
@@ -97,7 +97,7 @@ async function mergeIfLGTMAndHasAccess() {
   }
   
   // Setup
-  const cwd = process.cwd()
+  const cwd = core.getInput('cwd') || process.cwd()
   const octokit = getOctokit(process.env.GITHUB_TOKEN)
   const thisRepo = { owner: context.repo.owner, repo: context.repo.repo }
   const issue = context.payload.issue || context.payload.pull_request

@@ -6,6 +6,11 @@ branding:
   icon: git-merge
   color: purple
 
+inputs:
+  cwd:
+    description: 'The path to the root folder where it should look for code owners'
+    default: ''
+
 runs:
   using: 'node12'
   main: 'index.js'
