@@ -72,6 +72,19 @@ packages/typescriptlang-org/src/copy/es/**/*.ts @KingDarBoja [translate] [es]
 packages/documentation/copy/es/**/*.ts @KingDarBoja [translate] [es]
 ```
 
+## Config
+
+There is only one option available ATM, `cwd` which can be used to determine the root folder to look for CODEOWNER files in:
+
+```yml
+- name: Run Codeowners merge check
+  uses:  orta/code-owner-self-merge@v1
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  with: 
+    cwd: './docs'
+```
+
 ### Dev
 
 Use `npx jest --watch` to run tests.
