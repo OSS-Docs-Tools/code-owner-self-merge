@@ -48,7 +48,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Run Codeowners merge check
-        uses:  orta/code-owner-self-merge@v1
+        uses: OSS-Docs-Tools/code-owner-self-merge@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -78,7 +78,7 @@ There is only one option available ATM, `cwd` which can be used to determine the
 
 ```yml
 - name: Run Codeowners merge check
-  uses:  orta/code-owner-self-merge@v1
+  uses: OSS-Docs-Tools/code-owner-self-merge@v1
   env:
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   with: 
