@@ -3,7 +3,7 @@
 const { context, getOctokit } = require('@actions/github')
 const core = require('@actions/core');
 const Codeowners = require('codeowners');
-const {readFileSync} = require("fs")
+const {readFileSync} = require("fs");
 
 // Effectively the main function
 async function run() {
@@ -112,7 +112,29 @@ async function mergeIfLGTMAndHasAccess() {
   if (filesWhichArentOwned.length !== 0) {
     console.log(`@${sender} does not have access to merge \n - ${filesWhichArentOwned.join("\n - ")}\n`)
     listFilesWithOwners(changedFiles, cwd)
-    process.exit(0)
+    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, you don't have access to merge: ${filesWhichArentOwned.join(", ")}.` });
+    return
+  }
+
+  // Don't try merge unmergable stuff
+  const prInfo = await octokit.pulls.get({ ...thisRepo, pull_number: issue.number })
+  if (!prInfo.data.mergeable) {
+    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, this PR has merge conflicts. They'll need to be fixed before this can be merged.` });
+    return
+  }
+
+  if (prInfo.data.state !== "OPEN") {
+    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, this PR isn't open.` });
+    return
+  }
+
+  // Don't merge red PRs
+  const statusInfo = await octokit.repos.listCommitStatusesForRef({ ...thisRepo, ref: prInfo.data.head.sha })
+  const failedStatus = statusInfo.data.find(s => s.state !== "success")
+
+  if (failedStatus) {
+    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, this PR could not be merged because it wasn't green. Blocked by [${failedStatus.context}](${failedStatus.target_url}): '${failedStatus.description}'.` });
+    return
   }
 
   core.info(`Creating comments and merging`)
@@ -120,7 +142,7 @@ async function mergeIfLGTMAndHasAccess() {
     await octokit.pulls.merge({ ...thisRepo, pull_number: issue.number });
     await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Merging because @${sender} is a code-owner of all the changes - thanks!` });
   } catch (error) {
-    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Looks good to merge, thanks ${sender}.` });
+    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `There was an issue merging, maybe try again ${sender}.` });
   }
 }
 
