@@ -7,7 +7,7 @@ const {readFileSync} = require("fs");
 
 // Effectively the main function
 async function run() {
-  core.info("Running version 1.5.0")
+  core.info("Running version 1.5.1")
 
   // Tell folks they can merge
   if (context.eventName === "pull_request_target") {
@@ -123,7 +123,7 @@ async function mergeIfLGTMAndHasAccess() {
     return
   }
 
-  if (prInfo.data.state !== "OPEN") {
+  if (prInfo.data.state.toLowerCase() !== "open") {
     await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, this PR isn't open.` });
     return
   }
