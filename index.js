@@ -139,7 +139,8 @@ async function mergeIfLGTMAndHasAccess() {
 
   core.info(`Creating comments and merging`)
   try {
-    await octokit.pulls.merge({ ...thisRepo, pull_number: issue.number });
+    // @ts-ignore
+    await octokit.pulls.merge({ ...thisRepo, pull_number: issue.number, merge_method: core.getInput('merge_method') || 'merge' });
     await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Merging because @${sender} is a code-owner of all the changes - thanks!` });
   } catch (error) {
     await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `There was an issue merging, maybe try again ${sender}.` });

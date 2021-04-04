@@ -10,6 +10,9 @@ inputs:
   cwd:
     description: 'The path to the root folder where it should look for code owners'
     default: ''
+  merge_method:
+    description: "The merge strategy to use: 'merge', 'squash' or 'rebase'"
+    default: 'merge'
 
 runs:
   using: 'node12'
