@@ -48,7 +48,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Run Codeowners merge check
-        uses: OSS-Docs-Tools/code-owner-self-merge@v1
+        uses: OSS-Docs-Tools/code-owner-self-merge@1.5.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
