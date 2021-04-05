@@ -131,6 +131,7 @@ async function mergeIfLGTMAndHasAccess() {
   // Don't merge red PRs
   const statusInfo = await octokit.repos.listCommitStatusesForRef({ ...thisRepo, ref: prInfo.data.head.sha })
   const failedStatus = statusInfo.data
+    // Check only the most recent for a set of duplicated statuses
     .filter(
       (thing, index, self) =>
         index === self.findIndex((t) => t.target_url === thing.target_url)
