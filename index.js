@@ -130,7 +130,13 @@ async function mergeIfLGTMAndHasAccess() {
 
   // Don't merge red PRs
   const statusInfo = await octokit.repos.listCommitStatusesForRef({ ...thisRepo, ref: prInfo.data.head.sha })
-  const failedStatus = statusInfo.data.find(s => s.state !== "success")
+  const failedStatus = statusInfo.data
+    // Check only the most recent for a set of duplicated statuses
+    .filter(
+      (thing, index, self) =>
+        index === self.findIndex((t) => t.target_url === thing.target_url)
+    )
+    .find(s => s.state !== "success")
 
   if (failedStatus) {
     await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, this PR could not be merged because it wasn't green. Blocked by [${failedStatus.context}](${failedStatus.target_url}): '${failedStatus.description}'.` });
