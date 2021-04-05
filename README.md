@@ -74,15 +74,19 @@ packages/documentation/copy/es/**/*.ts @KingDarBoja [translate] [es]
 
 ## Config
 
-There is only one option available ATM, `cwd` which can be used to determine the root folder to look for CODEOWNER files in:
+There are only two options available at the moment:
+
+- `cwd`, which can be used to determine the root folder to look for CODEOWNER files in.
+- `merge_method`, which can be `merge` (default), `squash` or `rebase`, depending on what you want the action to do.
 
 ```yml
 - name: Run Codeowners merge check
   uses: OSS-Docs-Tools/code-owner-self-merge@v1
   env:
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  with: 
+  with:
     cwd: './docs'
+    merge_method: 'squash'
 ```
 
 ### Dev
