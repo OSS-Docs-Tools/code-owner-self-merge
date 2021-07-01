@@ -58,6 +58,19 @@ async function commentOnMergablePRs() {
   if (!ownersWhoHaveAccessToAllFilesInPR.length) {
     console.log("This PR does not have any code-owners who own all of the files in the PR")
     listFilesWithOwners(changedFiles, cwd)
+    
+    const labelToAdd = core.getInput('if_no_maintainers_add_label')
+    if (labelToAdd) {
+      const labelConfig = { name: labelToAdd, color: Math.random().toString(16).slice(2, 8) }
+      await createOrAddLabel(octokit, thisRepo, labelConfig)
+    }
+
+    const assignees = core.getInput('if_no_maintainers_assign')
+    if (assignees) {
+      const usernames = assignees.split(" ").map(u => u.replace("@", "").trim())
+      await octokit.issues.addAssignees({ ...thisRepo, issue_number: pr.number, assignees: usernames})
+    }
+
     process.exit(0)
   }
 

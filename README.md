@@ -74,7 +74,7 @@ packages/documentation/copy/es/**/*.ts @KingDarBoja [translate] [es]
 
 ## Config
 
-There are only two options available at the moment:
+There are four options available at the moment:
 
 - `cwd`, which can be used to determine the root folder to look for CODEOWNER files in.
 - `merge_method`, which can be `merge` (default), `squash` or `rebase`, depending on what you want the action to do.
@@ -87,6 +87,22 @@ There are only two options available at the moment:
   with:
     cwd: './docs'
     merge_method: 'squash'
+```
+
+Then 2 for handling fallbacks on PRs which aren't able to be maintained by anyone in the CODEOWNERs:
+
+- `if_no_maintainers_add_label` - A label to add which denotes it is a maintainers PR to handle
+- `if_no_maintainers_assign` - A string of `@` prefixed GitHub usernames, separated by spaces which denotes who should be assigned to PRs which don't get a CODEOWNER.
+
+```yml
+- name: Run Codeowners merge check
+  uses: OSS-Docs-Tools/code-owner-self-merge@v1
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  with:
+    merge_method: 'squash'
+    if_no_maintainers_add_label: 'maintainers'
+    if_no_maintainers_assign: '@orta @sandersn'
 ```
 
 ### Dev
