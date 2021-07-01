@@ -35,4 +35,3 @@ test("deciding if someone has access to merge", () => {
   expect(filesNotInCodeowners).toEqual(["random-path/file.ts"]);
 });
 
-

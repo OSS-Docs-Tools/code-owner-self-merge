@@ -10,9 +10,22 @@ inputs:
   cwd:
     description: 'The path to the root folder where it should look for code owners'
     default: ''
+    required: false
+
   merge_method:
     description: "The merge strategy to use: 'merge', 'squash' or 'rebase'"
     default: 'merge'
+    required: false
+
+  if_no_maintainers_add_label:
+    description: "If a PR does not have any community maintainers, apply this label"
+    default: ''
+    required: false
+    
+  if_no_maintainers_assign:
+    description: 'If a PR does not have any community maintainers, assign these people (e.g. "@orta @sandersn")'
+    default: ''
+    required: false
 
 runs:
   using: 'node12'
