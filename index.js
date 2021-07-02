@@ -7,7 +7,7 @@ const {readFileSync} = require("fs");
 
 // Effectively the main function
 async function run() {
-  core.info("Running version 1.5.1")
+  core.info("Running version 1.5.4")
 
   // Tell folks they can merge
   if (context.eventName === "pull_request_target") {
@@ -62,7 +62,7 @@ async function commentOnMergablePRs() {
     const labelToAdd = core.getInput('if_no_maintainers_add_label')
     if (labelToAdd) {
       const labelConfig = { name: labelToAdd, color: Math.random().toString(16).slice(2, 8) }
-      await createOrAddLabel(octokit, thisRepo, labelConfig)
+      await createOrAddLabel(octokit, { ...thisRepo, id: pr.number }, labelConfig)
     }
 
     const assignees = core.getInput('if_no_maintainers_assign')
