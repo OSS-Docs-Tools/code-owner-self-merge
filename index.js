@@ -93,7 +93,7 @@ ${ourSignature}`
   // Add labels
   for (const label of codeowners.labels) {
     const labelConfig = { name: label, color: Math.random().toString(16).slice(2, 8) }
-    await  createOrAddLabel(octokit, { ...thisRepo, id: pr.number }, labelConfig)
+    await createOrAddLabel(octokit, { ...thisRepo, id: pr.number }, labelConfig)
   }
 }
 
@@ -223,7 +223,7 @@ function findCodeOwnersForChangedFiles(changedFiles, cwd)  {
     })
   }
 
-  return  {
+  return {
     users: Array.from(owners),
     labels: Array.from(labels)
   }
