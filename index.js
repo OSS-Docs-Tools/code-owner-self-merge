@@ -101,7 +101,7 @@ ${ourSignature}`
  * @param {string[]} files
  */
 function pathListToMarkdown(files) {
-  return files.map(i => `* [\`${i}\`](https://github.com/${context.repo.owner}/${context.repo.repo}/tree/HEAD/${i})`).join("\n");
+  return files.map(i => `* [\`${i}\`](https://github.com/${context.repo.owner}/${context.repo.repo}/tree/HEAD${i})`).join("\n");
 }
 
 async function mergeIfLGTMAndHasAccess() {
