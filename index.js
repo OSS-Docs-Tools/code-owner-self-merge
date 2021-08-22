@@ -233,7 +233,7 @@ async function getPRChangedFiles(octokit, repoDeets, prNumber) {
   // https://developer.github.com/v3/pulls/#list-pull-requests-files
   const options = octokit.pulls.listFiles.endpoint.merge({...repoDeets, pull_number: prNumber });
 
-  /** @type { import("@octokit/rest").PullsListFilesResponseItem[]} */
+  /** @type { import("@octokit/types").PullsListFilesResponseData} */
   const files = await octokit.paginate(options)
   const fileStrings = files.map(f => `/${f.filename}`)
   return fileStrings
