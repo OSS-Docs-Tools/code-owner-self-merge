@@ -100,8 +100,15 @@ ${ourSignature}`
   // Add labels
   for (const label of codeowners.labels) {
     const labelConfig = { name: label, color: Math.random().toString(16).slice(2, 8) }
-    await  createOrAddLabel(octokit, { ...thisRepo, id: pr.number }, labelConfig)
+    await createOrAddLabel(octokit, { ...thisRepo, id: pr.number }, labelConfig)
   }
+}
+
+/**
+ * @param {string[]} files
+ */
+function pathListToMarkdown(files) {
+  return files.map(i => `* [\`${i}\`](https://github.com/${context.repo.owner}/${context.repo.repo}/tree/HEAD${i})`).join("\n");
 }
 
 function getPayloadBody() {
@@ -132,7 +139,7 @@ class Actor {
     if (filesWhichArentOwned.length !== 0) {
       console.log(`@${sender} does not have access to \n - ${filesWhichArentOwned.join("\n - ")}\n`)
       listFilesWithOwners(changedFiles, cwd)
-      await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, you don't have access to these files: ${filesWhichArentOwned.join(", ")}.` })
+      await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, you don't have access to these files: ${pathListToMarkdown(filesWhichArentOwned)}.` })
       return
     }
 
@@ -254,7 +261,7 @@ function findCodeOwnersForChangedFiles(changedFiles, cwd)  {
     })
   }
 
-  return  {
+  return {
     users: Array.from(owners),
     labels: Array.from(labels)
   }
