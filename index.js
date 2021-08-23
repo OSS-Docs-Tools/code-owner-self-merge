@@ -16,7 +16,14 @@ async function run() {
 
   // Merge if they say they have access
   if (context.eventName === "issue_comment" || context.eventName === "pull_request_review") {
-    mergeIfLGTMAndHasAccess()
+    const bodyLower = getPayloadBody().toLowerCase();
+    if (bodyLower.includes("lgtm")) {
+      new Actor().mergeIfHasAccess();
+    } else if (bodyLower.includes("@github-actions close")) {
+      new Actor().closeIfHasAccess();
+    } else {
+      console.log("Doing nothing because the body does not include a command")
+    }
   }
 }
 
@@ -104,77 +111,101 @@ function pathListToMarkdown(files) {
   return files.map(i => `* [\`${i}\`](https://github.com/${context.repo.owner}/${context.repo.repo}/tree/HEAD${i})`).join("\n");
 }
 
-async function mergeIfLGTMAndHasAccess() {
+function getPayloadBody() {
   const body = context.payload.comment ? context.payload.comment.body : context.payload.review.body
-  if (!body) {
-    // For debugging #8
-    console.log(JSON.stringify(context))
+  if (body == null) {
+    throw new Error(`No body found, ${JSON.stringify(context)}`)
+  }
+  return body;
+}
+
+class Actor {
+  constructor() {
+    this.cwd = core.getInput('cwd') || process.cwd()
+    this.octokit = getOctokit(process.env.GITHUB_TOKEN)
+    this.thisRepo = { owner: context.repo.owner, repo: context.repo.repo }
+    this.issue = context.payload.issue || context.payload.pull_request
+    this.sender = context.payload.sender.login
   }
 
-  if (!body || !body.toLowerCase().includes("lgtm")) {
-    console.log("Comment does not include LGTM ('looks good to me') so not merging")
-    process.exit(0)
+  async getTargetPRIfHasAccess() {
+    const { octokit, thisRepo, sender, issue, cwd } = this;
+    core.info(`\n\nLooking at the ${context.eventName} from ${sender} in '${issue.title}' to see if we can proceed`)
+
+    const changedFiles = await getPRChangedFiles(octokit, thisRepo, issue.number)
+    core.info(`Changed files: \n - ${changedFiles.join("\n - ")}`)
+
+    const filesWhichArentOwned = getFilesNotOwnedByCodeOwner("@" + sender, changedFiles, cwd)
+    if (filesWhichArentOwned.length !== 0) {
+      console.log(`@${sender} does not have access to \n - ${filesWhichArentOwned.join("\n - ")}\n`)
+      listFilesWithOwners(changedFiles, cwd)
+      await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, you don't have access to these files: ${pathListToMarkdown(filesWhichArentOwned)}.` })
+      return
+    }
+
+    const prInfo = await octokit.pulls.get({ ...thisRepo, pull_number: issue.number })
+    if (prInfo.data.state.toLowerCase() !== "open") {
+      await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, this PR isn't open.` });
+      return
+    }
+    return prInfo
   }
 
-  // Setup
-  const cwd = core.getInput('cwd') || process.cwd()
-  const octokit = getOctokit(process.env.GITHUB_TOKEN)
-  const thisRepo = { owner: context.repo.owner, repo: context.repo.repo }
-  const issue = context.payload.issue || context.payload.pull_request
-  const sender = context.payload.sender.login
+  async mergeIfHasAccess() {
+    const prInfo = await this.getTargetPRIfHasAccess()
+    if (!prInfo) {
+      return
+    }
 
-  core.info(`\n\nLooking at the ${context.eventName} from ${sender} in '${issue.title}' to see if we can merge`)
+    const { octokit, thisRepo, issue, sender } = this;
 
-  const changedFiles = await getPRChangedFiles(octokit, thisRepo, issue.number)
-  core.info(`Changed files: \n - ${changedFiles.join("\n - ")}`)
+    // Don't try merge unmergable stuff
+    if (!prInfo.data.mergeable) {
+      await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, this PR has merge conflicts. They'll need to be fixed before this can be merged.` });
+      return
+    }
 
-  const filesWhichArentOwned = getFilesNotOwnedByCodeOwner("@" + sender, changedFiles, cwd)
-  if (filesWhichArentOwned.length !== 0) {
-    console.log(`@${sender} does not have access to merge \n - ${filesWhichArentOwned.join("\n - ")}\n`)
-    listFilesWithOwners(changedFiles, cwd)
-    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, you don't have access to merge:\n${pathListToMarkdown(filesWhichArentOwned)}` });
-    return
+    // Don't merge red PRs
+    const statusInfo = await octokit.repos.listCommitStatusesForRef({ ...thisRepo, ref: prInfo.data.head.sha })
+    const failedStatus = statusInfo.data
+      // Check only the most recent for a set of duplicated statuses
+      .filter(
+        (thing, index, self) =>
+          index === self.findIndex((t) => t.target_url === thing.target_url)
+      )
+      .find(s => s.state !== "success")
+
+    if (failedStatus) {
+      await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, this PR could not be merged because it wasn't green. Blocked by [${failedStatus.context}](${failedStatus.target_url}): '${failedStatus.description}'.` });
+      return
+    }
+
+    core.info(`Creating comments and merging`)
+    try {
+      // @ts-ignore
+      await octokit.pulls.merge({ ...thisRepo, pull_number: issue.number, merge_method: core.getInput('merge_method') || 'merge' });
+      await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Merging because @${sender} is a code-owner of all the changes - thanks!` });
+    } catch (error) {
+      core.info(`Merging (or commenting) failed:`)
+      core.error(error)
+      core.setFailed("Failed to merge")
+
+      const linkToCI = `https://github.com/${thisRepo.owner}/${thisRepo.repo}/runs/${process.env.GITHUB_RUN_ID}?check_suite_focus=true`
+      await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `There was an issue merging, maybe try again ${sender}. <a href="${linkToCI}">Details</a>` });
+    }
   }
 
-  // Don't try merge unmergable stuff
-  const prInfo = await octokit.pulls.get({ ...thisRepo, pull_number: issue.number })
-  if (!prInfo.data.mergeable) {
-    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, this PR has merge conflicts. They'll need to be fixed before this can be merged.` });
-    return
-  }
+  async closeIfHasAccess() {
+    const prInfo = await this.getTargetPRIfHasAccess()
+    if (!prInfo) {
+      return
+    }
 
-  if (prInfo.data.state.toLowerCase() !== "open") {
-    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, this PR isn't open.` });
-    return
-  }
+    const { octokit, thisRepo, issue, sender } = this;
 
-  // Don't merge red PRs
-  const statusInfo = await octokit.repos.listCommitStatusesForRef({ ...thisRepo, ref: prInfo.data.head.sha })
-  const failedStatus = statusInfo.data
-    // Check only the most recent for a set of duplicated statuses
-    .filter(
-      (thing, index, self) =>
-        index === self.findIndex((t) => t.target_url === thing.target_url)
-    )
-    .find(s => s.state !== "success")
-
-  if (failedStatus) {
-    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, this PR could not be merged because it wasn't green. Blocked by [${failedStatus.context}](${failedStatus.target_url}): '${failedStatus.description}'.` });
-    return
-  }
-
-  core.info(`Creating comments and merging`)
-  try {
-    // @ts-ignore
-    await octokit.pulls.merge({ ...thisRepo, pull_number: issue.number, merge_method: core.getInput('merge_method') || 'merge' });
-    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Merging because @${sender} is a code-owner of all the changes - thanks!` });
-  } catch (error) {
-    core.info(`Merging (or commenting) failed:`)
-    core.error(error)
-    core.setFailed("Failed to merge")
-
-    const linkToCI = `https://github.com/${thisRepo.owner}/${thisRepo.repo}/runs/${process.env.GITHUB_RUN_ID}?check_suite_focus=true`
-    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `There was an issue merging, maybe try again ${sender}. <a href="${linkToCI}">Details</a>` });
+    core.info(`Creating comments and closing`)
+    await octokit.pulls.update({ ...thisRepo, pull_number: issue.number, state: "closed" });
+    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Closing because @${sender} is a code-owner of all the changes.` });
   }
 }
 
