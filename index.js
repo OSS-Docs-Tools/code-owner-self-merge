@@ -97,6 +97,13 @@ ${ourSignature}`
   }
 }
 
+/**
+ * @param {string[]} files
+ */
+function pathListToMarkdown(files) {
+  return files.map(i => `* [\`${i}\`](https://github.com/${context.repo.owner}/${context.repo.repo}/tree/HEAD${i})`).join("\n");
+}
+
 async function mergeIfLGTMAndHasAccess() {
   const body = context.payload.comment ? context.payload.comment.body : context.payload.review.body
   if (!body) {
@@ -125,7 +132,7 @@ async function mergeIfLGTMAndHasAccess() {
   if (filesWhichArentOwned.length !== 0) {
     console.log(`@${sender} does not have access to merge \n - ${filesWhichArentOwned.join("\n - ")}\n`)
     listFilesWithOwners(changedFiles, cwd)
-    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, you don't have access to merge: ${filesWhichArentOwned.join(", ")}.` });
+    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, you don't have access to merge:\n${pathListToMarkdown(filesWhichArentOwned)}` });
     return
   }
 
