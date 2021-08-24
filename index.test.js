@@ -45,7 +45,11 @@ describe(githubLoginIsInCodeowners, () => {
     expect(ortaIn).toEqual(true);
   });
   test("denies other accounts", () => {
-    const ortaIn = githubLoginIsInCodeowners("dogman", ".");
-    expect(ortaIn).toEqual(false);
+    const noDogMan = githubLoginIsInCodeowners("dogman", ".");
+    expect(noDogMan).toEqual(false);
+  });
+  test("denies subsets of existing accounts", () => {
+    const noOrt = githubLoginIsInCodeowners("ort", ".");
+    expect(noOrt).toEqual(false);
   });
 })  
