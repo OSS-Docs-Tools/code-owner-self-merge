@@ -1,4 +1,4 @@
-const { getFilesNotOwnedByCodeOwner, findCodeOwnersForChangedFiles } = require(".");
+const { getFilesNotOwnedByCodeOwner, findCodeOwnersForChangedFiles, githubLoginIsInCodeowners } = require(".");
 
 test("determine who owns a set of files", () => {
   const noFiles = findCodeOwnersForChangedFiles(["root-codeowners/one.two.js"], "./test-code-owners-repo");
@@ -35,3 +35,17 @@ test("deciding if someone has access to merge", () => {
   expect(filesNotInCodeowners).toEqual(["random-path/file.ts"]);
 });
 
+describe(githubLoginIsInCodeowners, () => {
+  test("allows folks found in the codeowners", () => {
+    const ortaIn = githubLoginIsInCodeowners("orta", ".");
+    expect(ortaIn).toEqual(true);
+  });
+  test("ignores case", () => {
+    const ortaIn = githubLoginIsInCodeowners("OrTa", ".");
+    expect(ortaIn).toEqual(true);
+  });
+  test("denies other accounts", () => {
+    const ortaIn = githubLoginIsInCodeowners("dogman", ".");
+    expect(ortaIn).toEqual(false);
+  });
+})  
