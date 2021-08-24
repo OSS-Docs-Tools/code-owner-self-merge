@@ -59,6 +59,14 @@ Then you should be good to go.
 
 We force the use of [`pull_request_target`](https://github.blog/2020-08-03-github-actions-improvements-for-fork-and-pull-request-workflows/) as a workflow event to ensure that someone cannot change the CODEOWNER files at the same time as having that change be used to validate if they can merge.
 
+### Issue / PR closing
+
+Merging a PR has strict security requirements, but closing a PR or Issue can have a weaker one. Anyone with a GitHub login in the CODEOWNER has the ability to close any PR / Issue via a comment/review which includes:
+
+```
+@github-actions close
+```
+
 ### Extras
 
 You can use this label to set labels for specific sections of the codebase, by having square brackets to indicate labels to make: `[label]`

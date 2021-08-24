@@ -7,7 +7,7 @@ const {readFileSync} = require("fs");
 
 // Effectively the main function
 async function run() {
-  core.info("Running version 1.5.4")
+  core.info("Running version 1.6.0")
 
   // Tell folks they can merge
   if (context.eventName === "pull_request_target") {
@@ -20,7 +20,7 @@ async function run() {
     if (bodyLower.includes("lgtm")) {
       new Actor().mergeIfHasAccess();
     } else if (bodyLower.includes("@github-actions close")) {
-      new Actor().closeIfHasAccess();
+      new Actor().closePROrIssueIfInCodeowners();
     } else {
       console.log("Doing nothing because the body does not include a command")
     }
@@ -125,6 +125,7 @@ class Actor {
     this.octokit = getOctokit(process.env.GITHUB_TOKEN)
     this.thisRepo = { owner: context.repo.owner, repo: context.repo.repo }
     this.issue = context.payload.issue || context.payload.pull_request
+    /** @type {string} - GitHub login */
     this.sender = context.payload.sender.login
   }
 
@@ -195,11 +196,11 @@ class Actor {
     }
   }
 
-  async closeIfHasAccess() {
-    const prInfo = await this.getTargetPRIfHasAccess()
-    if (!prInfo) {
-      return
-    }
+  async closePROrIssueIfInCodeowners() { 
+    // Because closing a PR/issue does not mutate the repo, we can use a weaker
+    // authentication method: basically is the person in the codeowners? Then they can close
+    // an issue or PR. 
+    if (!githubLoginIsInCodeowners(this.sender, this.cwd)) return
 
     const { octokit, thisRepo, issue, sender } = this;
 
@@ -229,6 +230,22 @@ function getFilesNotOwnedByCodeOwner(owner, files, cwd) {
 
   return filesWhichArentOwned
 }
+
+
+/**
+ * This is a reasonable security measure for proving an account is specified in the codeowners
+ * but _SHOULD NOT_ be used for authentication for something which mutates the repo,
+ * 
+ * @param {string} login
+ * @param {string} cwd
+ */
+ function githubLoginIsInCodeowners(login, cwd) {
+  const codeowners = new Codeowners(cwd);
+  const contents = readFileSync(codeowners.codeownersFilePath, "utf8").toLowerCase()
+
+  return contents.includes("@" + login.toLowerCase() + " ") || contents.includes("@" + login.toLowerCase() + "\n")
+}
+
 
 /**
  *
@@ -301,9 +318,11 @@ async function createOrAddLabel(octokit, repoDeets, labelConfig) {
   })
 }
 
+// For tests
 module.exports = {
   getFilesNotOwnedByCodeOwner,
-  findCodeOwnersForChangedFiles
+  findCodeOwnersForChangedFiles,
+  githubLoginIsInCodeowners
 }
 
 // @ts-ignore
