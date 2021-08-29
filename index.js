@@ -205,8 +205,8 @@ class Actor {
     const { octokit, thisRepo, issue, sender } = this;
 
     core.info(`Creating comments and closing`)
-    await octokit.pulls.update({ ...thisRepo, pull_number: issue.number, state: "closed" });
-    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Closing because @${sender} is a code-owner of all the changes.` });
+    await octokit.issues.update({ ...thisRepo, issue_number: issue.number, state: "closed" });
+    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Closing because @${sender} is one of the code-owners of this repository.` });
   }
 }
 
