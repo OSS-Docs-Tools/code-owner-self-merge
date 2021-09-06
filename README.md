@@ -59,12 +59,18 @@ Then you should be good to go.
 
 We force the use of [`pull_request_target`](https://github.blog/2020-08-03-github-actions-improvements-for-fork-and-pull-request-workflows/) as a workflow event to ensure that someone cannot change the CODEOWNER files at the same time as having that change be used to validate if they can merge.
 
-### Issue / PR closing
+### Issue / PR manipulation
 
 Merging a PR has strict security requirements, but closing a PR or Issue can have a weaker one. Anyone with a GitHub login in the CODEOWNER has the ability to close any PR / Issue via a comment/review which includes:
 
 ```
 @github-actions close
+```
+
+A closed PR can be re-opened with:
+
+```
+@github-actions reopen
 ```
 
 ### Extras
