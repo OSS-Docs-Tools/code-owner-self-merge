@@ -21,6 +21,8 @@ async function run() {
       new Actor().mergeIfHasAccess();
     } else if (bodyLower.includes("@github-actions close")) {
       new Actor().closePROrIssueIfInCodeowners();
+    } else if (bodyLower.includes("@github-actions reopen")) {
+      new Actor().reopenPROrIssueIfInCodeowners();
     } else {
       console.log("Doing nothing because the body does not include a command")
     }
@@ -196,10 +198,10 @@ class Actor {
     }
   }
 
-  async closePROrIssueIfInCodeowners() { 
+  async closePROrIssueIfInCodeowners() {
     // Because closing a PR/issue does not mutate the repo, we can use a weaker
     // authentication method: basically is the person in the codeowners? Then they can close
-    // an issue or PR. 
+    // an issue or PR.
     if (!githubLoginIsInCodeowners(this.sender, this.cwd)) return
 
     const { octokit, thisRepo, issue, sender } = this;
@@ -207,6 +209,16 @@ class Actor {
     core.info(`Creating comments and closing`)
     await octokit.issues.update({ ...thisRepo, issue_number: issue.number, state: "closed" });
     await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Closing because @${sender} is one of the code-owners of this repository.` });
+  }
+
+  async reopenPROrIssueIfInCodeowners() {
+    if (!githubLoginIsInCodeowners(this.sender, this.cwd)) return
+
+    const { octokit, thisRepo, issue, sender } = this;
+
+    core.info(`Creating comments and reopening`)
+    await octokit.issues.update({ ...thisRepo, issue_number: issue.number, state: "open" });
+    await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Reopening because @${sender} is one of the code-owners of this repository.` });
   }
 }
 
@@ -235,7 +247,7 @@ function getFilesNotOwnedByCodeOwner(owner, files, cwd) {
 /**
  * This is a reasonable security measure for proving an account is specified in the codeowners
  * but _SHOULD NOT_ be used for authentication for something which mutates the repo,
- * 
+ *
  * @param {string} login
  * @param {string} cwd
  */
