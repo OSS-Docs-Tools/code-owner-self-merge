@@ -185,8 +185,9 @@ class Actor {
 
     core.info(`Creating comments and merging`)
     try {
+      const coauthor = `Co-authored-by: ${sender} <${sender}@users.noreply.github.com>`
       // @ts-ignore
-      await octokit.pulls.merge({ ...thisRepo, pull_number: issue.number, merge_method: core.getInput('merge_method') || 'merge' });
+      await octokit.pulls.merge({ ...thisRepo, pull_number: issue.number, merge_method: core.getInput('merge_method') || 'merge', commit_message: coauthor });
       await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Merging because @${sender} is a code-owner of all the changes - thanks!` });
     } catch (error) {
       core.info(`Merging (or commenting) failed:`)
