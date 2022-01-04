@@ -110,7 +110,7 @@ ${ourSignature}`
  * @param {string[]} files
  */
 function pathListToMarkdown(files) {
-  return files.map(i => `* [\`${i}\`](https://github.com/${context.repo.owner}/${context.repo.repo}/tree/HEAD${i})`).join("\n");
+  return files.map(i => `* [\`${i}\`](https://github.com/${context.repo.owner}/${context.repo.repo}/tree/HEAD${encodeURIComponent(i)})`).join("\n");
 }
 
 function getPayloadBody() {
@@ -142,7 +142,7 @@ class Actor {
     if (filesWhichArentOwned.length !== 0) {
       console.log(`@${sender} does not have access to \n - ${filesWhichArentOwned.join("\n - ")}\n`)
       listFilesWithOwners(changedFiles, cwd)
-      await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, you don't have access to these files: ${pathListToMarkdown(filesWhichArentOwned)}.` })
+      await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, you don't have access to these files:\n\n${pathListToMarkdown(filesWhichArentOwned)}.` })
       return
     }
 
