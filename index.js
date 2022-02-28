@@ -17,7 +17,7 @@ async function run() {
   // Merge if they say they have access
   if (context.eventName === "issue_comment" || context.eventName === "pull_request_review") {
     const bodyLower = getPayloadBody().toLowerCase();
-    if (bodyLower.includes("lgtm")) {
+    if (bodyLower.includes("lgtm") && !bodyLower.includes("lgtm but")) {
       new Actor().mergeIfHasAccess();
     } else if (bodyLower.includes("@github-actions close")) {
       new Actor().closePROrIssueIfInCodeowners();
