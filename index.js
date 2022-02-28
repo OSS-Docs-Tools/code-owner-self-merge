@@ -57,6 +57,9 @@ async function commentOnMergablePRs() {
     process.exit(0)
   }
 
+  
+
+
   // Determine who has access to merge every file in this PR
   const ownersWhoHaveAccessToAllFilesInPR = []
   codeowners.users.forEach(owner => {
@@ -97,7 +100,11 @@ async function commentOnMergablePRs() {
 This section of the codebase is owned by ${owners} - if they write a comment saying "LGTM" then it will be merged.
 ${ourSignature}`
 
-  await octokit.issues.createComment({ ...thisRepo, issue_number: pr.number, body: message });
+
+  const skipOutput = core.getInput('quiet')
+  if (!skipOutput) {
+    await octokit.issues.createComment({ ...thisRepo, issue_number: pr.number, body: message });
+  }
 
   // Add labels
   for (const label of codeowners.labels) {

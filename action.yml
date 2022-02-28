@@ -27,6 +27,11 @@ inputs:
     default: ''
     required: false
 
+  quiet:
+    description: 'Do not say "this PR can be merged by x, y, z" out loud'
+    default: ''
+    required: false
+
 runs:
   using: 'node12'
   main: 'index.js'
