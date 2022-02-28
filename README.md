@@ -48,12 +48,12 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Run Codeowners merge check
-        uses: OSS-Docs-Tools/code-owner-self-merge@1.5.2
+        uses: OSS-Docs-Tools/code-owner-self-merge@1.6.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-Then you should be good to go.
+Then you should be good to go. Note that I might not have bumped the version in `^`, so double [check the releases.](https://github.com/OSS-Docs-Tools/code-owner-self-merge/releases)
 
 ### Security
 
