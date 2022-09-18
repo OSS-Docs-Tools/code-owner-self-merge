@@ -201,7 +201,7 @@ class Actor {
       core.error(error)
       core.setFailed("Failed to merge")
 
-      const linkToCI = `https://github.com/${thisRepo.owner}/${thisRepo.repo}/runs/${process.env.GITHUB_RUN_ID}?check_suite_focus=true`
+      const linkToCI = `https://github.com/${thisRepo.owner}/${thisRepo.repo}/actions/runs/${process.env.GITHUB_RUN_ID}?check_suite_focus=true`
       await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `There was an issue merging, maybe try again ${sender}. <a href="${linkToCI}">Details</a>` });
     }
   }
