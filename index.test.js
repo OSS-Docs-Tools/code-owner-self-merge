@@ -9,15 +9,16 @@ test("determine who owns a set of files", () => {
 });
 
 test("real world", () => {
+  // Stoovon is a member of teamA.
   const changed = ["/packages/tsconfig-reference/copy/pt/options/files.md"];
   const filesNotInCodeowners = findCodeOwnersForChangedFiles(changed, ".");
-  expect(filesNotInCodeowners.users).toEqual(["@khaosdoctor", "@danilofuchs", "@orta"]);
+  expect(filesNotInCodeowners.users).toEqual(["@khaosdoctor", "@danilofuchs", "@orta", "@stoovon"]);
 });
 
 test("real world 2", () => {
   const changed = ["/packages/typescriptlang-org/src/copy/pt/index.ts", "/packages/typescriptlang-org/src/copy/pt/nav.ts"];
   const filesNotInCodeowners = findCodeOwnersForChangedFiles(changed, ".");
-  expect(filesNotInCodeowners.users).toEqual(["@khaosdoctor", "@danilofuchs", "@orta"]);
+  expect(filesNotInCodeowners.users).toEqual(["@khaosdoctor", "@danilofuchs", "@orta", "@stoovon"]);
 });
 
 test("real world with labels", () => {
@@ -39,6 +40,11 @@ describe(githubLoginIsInCodeowners, () => {
   test("allows folks found in the codeowners", () => {
     const ortaIn = githubLoginIsInCodeowners("orta", ".");
     expect(ortaIn).toEqual(true);
+  });
+  test("allows folks in teams found in the codeowners", () => {
+    // Stoovon is a member of teamA.
+    const stoovonIn = githubLoginIsInCodeowners("stoovon", ".");
+    expect(stoovonIn).toEqual(true);
   });
   test("ignores case", () => {
     const ortaIn = githubLoginIsInCodeowners("OrTa", ".");

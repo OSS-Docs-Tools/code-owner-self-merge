@@ -15,7 +15,7 @@ packages/documentation/copy/ja/**/*.ts @sasurau4 @Quramy @Naturalclar @Takepepe
 # Collaborators for Portuguese Translation of the Website
 packages/playground-examples/copy/pt/**/*.md @khaosdoctor @danilofuchs @orta
 packages/playground-examples/copy/pt/**/*.ts @khaosdoctor @danilofuchs @orta
-packages/tsconfig-reference/copy/pt/**/*.md @khaosdoctor @danilofuchs  @orta
+packages/tsconfig-reference/copy/pt/**/*.md @khaosdoctor @danilofuchs  @orta @teamA
 packages/typescriptlang-org/src/copy/pt/**/*.ts @khaosdoctor @danilofuchs  @orta
 packages/documentation/copy/pt/**/*.ts @khaosdoctor @danilofuchs  @orta
 

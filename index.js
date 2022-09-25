@@ -239,13 +239,23 @@ class Actor {
 function getFilesNotOwnedByCodeOwner(owner, files, cwd) {
   const filesWhichArentOwned = []
   const codeowners = new Codeowners(cwd);
+  const octokit = getOctokit(process.env.GITHUB_TOKEN)
 
   for (const file of files) {
     const relative = file.startsWith("/") ? file.slice(1) : file
     let owners = codeowners.getOwner(relative);
-    if (!owners.includes(owner)) {
-      filesWhichArentOwned.push(file)
+    if (owners.includes(owner)) {
+      continue
     }
+
+    if (owners
+      .filter(owner => owner.startsWith("@"))
+      .some(teamowner => getTeamMembers(octokit, teamowner).then(result => result.includes(owner)))
+    ) {
+      continue
+    }
+
+    filesWhichArentOwned.push(file)
   }
 
   return filesWhichArentOwned
@@ -263,7 +273,21 @@ function getFilesNotOwnedByCodeOwner(owner, files, cwd) {
   const codeowners = new Codeowners(cwd);
   const contents = readFileSync(codeowners.codeownersFilePath, "utf8").toLowerCase()
 
-  return contents.includes("@" + login.toLowerCase() + " ") || contents.includes("@" + login.toLowerCase() + "\n")
+  if (contents.includes("@" + login.toLowerCase() + " ") || contents.includes("@" + login.toLowerCase() + "\n")) {
+    return true
+  }
+
+  const regex = /\@[a-zA-Z0-9]+\/[a-zA-Z0-9]+ /g;
+  const potentialTeams = contents.match(regex);
+  if (potentialTeams == null || potentialTeams.length == 0) {
+    return false
+  }
+
+  const octokit = getOctokit(process.env.GITHUB_TOKEN)
+
+  return potentialTeams.some(team => 
+    getTeamMembers(octokit, team.replace(" ","")).then(result => result.includes(login.toLowerCase()))
+  )
 }
 
 
@@ -312,6 +336,12 @@ async function getPRChangedFiles(octokit, repoDeets, prNumber) {
   const files = await octokit.paginate(options)
   const fileStrings = files.map(f => `/${f.filename}`)
   return fileStrings
+}
+
+async function getTeamMembers(octokit, teamname) {
+  const components = teamname.replace("@","").split("/")
+  const teamMembers = await octokit.paginate('GET /orgs/:org/teams/:team/members', {org: components[0], team: components[1]})
+  return teamMembers.map(teammember => teammember.login)
 }
 
 async function createOrAddLabel(octokit, repoDeets, labelConfig) {
