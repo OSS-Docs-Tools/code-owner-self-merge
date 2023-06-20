@@ -52,14 +52,6 @@ async function commentOnMergablePRs() {
   core.info(`Code-owners: \n - ${codeowners.users.join("\n - ")}`)
   core.info(`Labels: \n - ${codeowners.labels.join("\n - ")}`)
 
-  if (!codeowners.users.length) {
-    console.log("This PR does not have any code-owners")
-    process.exit(0)
-  }
-
-  
-
-
   // Determine who has access to merge every file in this PR
   const ownersWhoHaveAccessToAllFilesInPR = []
   codeowners.users.forEach(owner => {
