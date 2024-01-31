@@ -7,7 +7,7 @@ const {readFileSync} = require("fs");
 
 // Effectively the main function
 async function run() {
-  core.info("Running version 1.6.0")
+  core.info("Running version 1.6.5")
 
   // Tell folks they can merge
   if (context.eventName === "pull_request_target") {
