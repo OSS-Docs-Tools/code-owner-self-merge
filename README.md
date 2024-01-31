@@ -1,6 +1,6 @@
 A GitHub action that lets code-owners merge PRs via a comment.
 
-This action uses the standardized structure of [a CODEOWNERS file](https://github.blog/2017-07-06-introducing-code-owners/) to handle the access controls. 
+This action uses the standardized structure of [a CODEOWNERS file](https://github.blog/2017-07-06-introducing-code-owners/) to handle the access controls.
 
 <img src="screenshots/img.png">
 
@@ -126,4 +126,4 @@ Use `npx jest --watch` to run tests.
 
 ### Deploy
 
-Use the GH UI to make a tag and release
+Use the GH UI to make a tag and release.
