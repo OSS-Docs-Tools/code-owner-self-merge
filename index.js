@@ -57,7 +57,7 @@ async function commentOnMergablePRs() {
     process.exit(0)
   }
 
-  
+
 
 
   // Determine who has access to merge every file in this PR
@@ -94,7 +94,11 @@ async function commentOnMergablePRs() {
     process.exit(0)
   }
 
-  const owners = new Intl.ListFormat().format(ownersWhoHaveAccessToAllFilesInPR);
+  const ownerNoPings = JSON.parse(core.getInput('ownerNoPings'))
+  const formattedOwnersWhoHaveAccessToAllFilesInPR = ownersWhoHaveAccessToAllFilesInPR.map((owner) => {
+    return ownerNoPings.includes(owner) ? `\`${owner}\`` : owner
+  })
+  const owners = new Intl.ListFormat().format(formattedOwnersWhoHaveAccessToAllFilesInPR);
   const message = `Thanks for the PR!
 
 This section of the codebase is owned by ${owners} - if they write a comment saying "LGTM" then it will be merged.
