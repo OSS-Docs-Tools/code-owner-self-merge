@@ -78,6 +78,11 @@ async function commentOnMergablePRs() {
     process.exit(0)
   }
 
+  if (!codeowners.users.length) {
+    console.log("This PR does not have any code-owners")
+    process.exit(0)
+  }
+
   const ourSignature = "<!-- Message About Merging -->"
   const comments = await octokit.issues.listComments({ ...thisRepo, issue_number: pr.number })
   const existingComment = comments.data.find(c => c.body.includes(ourSignature))
