@@ -7,7 +7,7 @@ const {readFileSync} = require("fs");
 
 // Effectively the main function
 async function run() {
-  core.info("Running version 1.6.0")
+  core.info("Running version 1.6.5")
 
   // Tell folks they can merge
   if (context.eventName === "pull_request_target") {
@@ -86,7 +86,11 @@ async function commentOnMergablePRs() {
     process.exit(0)
   }
 
-  const owners = new Intl.ListFormat().format(ownersWhoHaveAccessToAllFilesInPR);
+  const ownerNoPings = JSON.parse(core.getInput('ownerNoPings'))
+  const formattedOwnersWhoHaveAccessToAllFilesInPR = ownersWhoHaveAccessToAllFilesInPR.map((owner) => {
+    return ownerNoPings.includes(owner) ? `\`${owner}\`` : owner
+  })
+  const owners = new Intl.ListFormat().format(formattedOwnersWhoHaveAccessToAllFilesInPR);
   const message = `Thanks for the PR!
 
 This section of the codebase is owned by ${owners} - if they write a comment saying "LGTM" then it will be merged.

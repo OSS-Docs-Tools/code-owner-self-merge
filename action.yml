@@ -32,6 +32,11 @@ inputs:
     default: ''
     required: false
 
+  ownerNoPings:
+    description: 'Wrap mention in inline code block to prevent pings'
+    default: '[]'
+    required: false
+
 runs:
   using: 'node12'
   main: 'index.js'

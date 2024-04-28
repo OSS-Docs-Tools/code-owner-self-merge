@@ -1,6 +1,6 @@
 A GitHub action that lets code-owners merge PRs via a comment.
 
-This action uses the standardized structure of [a CODEOWNERS file](https://github.blog/2017-07-06-introducing-code-owners/) to handle the access controls. 
+This action uses the standardized structure of [a CODEOWNERS file](https://github.blog/2017-07-06-introducing-code-owners/) to handle the access controls.
 
 <img src="screenshots/img.png">
 
@@ -88,11 +88,12 @@ packages/documentation/copy/es/**/*.ts @KingDarBoja [translate] [es]
 
 ## Config
 
-There are five options available at the moment:
+There are six options available at the moment:
 
 - `cwd`, which can be used to determine the root folder to look for CODEOWNER files in.
 - `merge_method`, which can be `merge` (default), `squash` or `rebase`, depending on what you want the action to do.
 - `quiet` - does not output a message saying who can merge PRs
+- `ownerNoPings` - list of usernames to wrap mention in an inline code block to prevent pinging
 
 ```yml
 - name: Run Codeowners merge check
@@ -126,4 +127,4 @@ Use `npx jest --watch` to run tests.
 
 ### Deploy
 
-Use the GH UI to make a tag and release
+Use the GH UI to make a tag and release.
