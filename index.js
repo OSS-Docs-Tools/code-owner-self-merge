@@ -17,7 +17,7 @@ async function run() {
   // Merge if they say they have access
   if (context.eventName === "issue_comment" || context.eventName === "pull_request_review") {
     const bodyLower = getPayloadBody().toLowerCase();
-    if (bodyLower.includes("lgtm") && !bodyLower.includes("lgtm but")) {
+    if (hasValidLgtmSubstring(bodyLower)) {
       new Actor().mergeIfHasAccess();
     } else if (bodyLower.includes("@github-actions close")) {
       new Actor().closePROrIssueIfInCodeowners();
@@ -170,6 +170,12 @@ class Actor {
 
     const { octokit, thisRepo, issue, sender } = this;
 
+    // Don't try merge if mergability is not yet known
+    if (prInfo.data.mergeable === null) {
+      await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, this PR is still running background checks to compute mergeability. They'll need to complete before this can be merged.` });
+      return
+    }
+
     // Don't try merge unmergable stuff
     if (!prInfo.data.mergeable) {
       await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `Sorry @${sender}, this PR has merge conflicts. They'll need to be fixed before this can be merged.` });
@@ -267,6 +273,27 @@ function getFilesNotOwnedByCodeOwner(owner, files, cwd) {
   return contents.includes("@" + login.toLowerCase() + " ") || contents.includes("@" + login.toLowerCase() + "\n")
 }
 
+/**
+ *
+ * @param {string} bodyLower
+ */
+function hasValidLgtmSubstring(bodyLower) {
+  if (bodyLower.includes("lgtm")) {
+    if (bodyLower.includes("lgtm but")) return false
+    if (bodyLower.includes("lgtm, but")) return false
+
+    const charBefore = bodyLower.charAt(bodyLower.indexOf("lgtm") - 1)
+    const charAfter = bodyLower.charAt(bodyLower.indexOf("lgtm") + "lgtm".length)
+    if (charBefore === "\"" || charAfter === "\"") return false
+    if (charBefore === "'" || charAfter === "'") return false
+    if (charBefore === "`" || charAfter === "`") return false
+
+    return true
+  }
+
+  return false
+}
+
 
 /**
  *
@@ -343,7 +370,8 @@ async function createOrAddLabel(octokit, repoDeets, labelConfig) {
 module.exports = {
   getFilesNotOwnedByCodeOwner,
   findCodeOwnersForChangedFiles,
-  githubLoginIsInCodeowners
+  githubLoginIsInCodeowners,
+  hasValidLgtmSubstring
 }
 
 // @ts-ignore
