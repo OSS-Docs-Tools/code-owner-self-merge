@@ -122,7 +122,14 @@ function pathListToMarkdown(files) {
 }
 
 function getPayloadBody() {
-  const body = context.payload.comment ? context.payload.comment.body : context.payload.review.body
+  let body = context.payload.comment ? context.payload.comment.body : context.payload.review.body
+  /**
+   * Of the three ways to review code ("commented", "approved", "changes_requested"), only
+   * "approved" can have a "null" body. For that case, ignore instead of throw error.
+   */
+  if (context.payload?.review?.state === 'approved' && body === null) {
+    body = ''
+  }
   if (body == null) {
     throw new Error(`No body found, ${JSON.stringify(context)}`)
   }
