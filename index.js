@@ -5,6 +5,8 @@ const core = require('@actions/core');
 const Codeowners = require('codeowners');
 const {readFileSync} = require("fs");
 
+const githubServerUrl = process.env['GITHUB_SERVER_URL'] || 'https://github.com'
+
 // Effectively the main function
 async function run() {
   core.info("Running version 1.6.5")
@@ -118,7 +120,7 @@ ${ourSignature}`
  * @param {string[]} files
  */
 function pathListToMarkdown(files) {
-  return files.map(i => `* [\`${i}\`](https://github.com/${context.repo.owner}/${context.repo.repo}/tree/HEAD${encodeURIComponent(i)})`).join("\n");
+  return files.map(i => `* [\`${i}\`](${githubServerUrl}/${context.repo.owner}/${context.repo.repo}/tree/HEAD${encodeURIComponent(i)})`).join("\n");
 }
 
 function getPayloadBody() {
@@ -215,7 +217,7 @@ class Actor {
       core.error(error)
       core.setFailed("Failed to merge")
 
-      const linkToCI = `https://github.com/${thisRepo.owner}/${thisRepo.repo}/actions/runs/${process.env.GITHUB_RUN_ID}?check_suite_focus=true`
+      const linkToCI = `${githubServerUrl}/${thisRepo.owner}/${thisRepo.repo}/actions/runs/${process.env.GITHUB_RUN_ID}?check_suite_focus=true`
       await octokit.issues.createComment({ ...thisRepo, issue_number: issue.number, body: `There was an issue merging, maybe try again ${sender}. <a href="${linkToCI}">Details</a>` });
     }
   }
