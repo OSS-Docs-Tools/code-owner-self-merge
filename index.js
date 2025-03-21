@@ -130,6 +130,12 @@ function getPayloadBody() {
   if (context.payload?.review?.state === 'approved' && body === null) {
     body = ''
   }
+  /**
+   * Comments on pull request reviews have a "null" body.
+   */
+  if (context.payload?.review?.state === 'commented' && body === null) {
+    body = ''
+  }
   if (body == null) {
     throw new Error(`No body found, ${JSON.stringify(context)}`)
   }
