@@ -48,12 +48,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run Codeowners merge check
-        uses: OSS-Docs-Tools/code-owner-self-merge@1.6.7
+        uses: OSS-Docs-Tools/code-owner-self-merge@1.6.8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-Then you should be good to go. Note that I might not have bumped the version in `^`, so double [check the releases.](https://github.com/OSS-Docs-Tools/code-owner-self-merge/releases)
+Then you should be good to go. Note that I might not have bumped the version in `^`, so double [check the releases.](https://github.com/OSS-Docs-Tools/code-owner-self-merge/releases). Also, given that this is a security focused GitHub Action, I'd recommend instead using commit references instead of `@x.y.z`.
 
 ### Security
 
