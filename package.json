@@ -1,10 +1,14 @@
 {
   "name": "code-owner-self-merge",
   "version": "1.0.0",
+  "type": "module",
   "main": "index.js",
   "license": "MIT",
+  "engines": {
+    "node": ">=12.17.0"
+  },
   "scripts": {
-    "test": "npx jest"
+    "test": "NODE_OPTIONS=--experimental-vm-modules npx jest"
   },
   "dependencies": {
     "@actions/core": "^1.2.4",

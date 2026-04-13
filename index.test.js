@@ -1,4 +1,4 @@
-const { getFilesNotOwnedByCodeOwner, findCodeOwnersForChangedFiles, githubLoginIsInCodeowners, hasValidLgtmSubstring } = require(".");
+import { getFilesNotOwnedByCodeOwner, findCodeOwnersForChangedFiles, githubLoginIsInCodeowners, hasValidLgtmSubstring } from "./index.js";
 
 test("determine who owns a set of files", () => {
   const noFiles = findCodeOwnersForChangedFiles(["root-codeowners/one.two.js"], "./test-code-owners-repo");
@@ -52,7 +52,7 @@ describe(githubLoginIsInCodeowners, () => {
     const noOrt = githubLoginIsInCodeowners("ort", ".");
     expect(noOrt).toEqual(false);
   });
-})  
+})
 
 describe(hasValidLgtmSubstring, () => {
   test("allows lgtm", () => {
