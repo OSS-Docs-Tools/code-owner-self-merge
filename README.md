@@ -37,7 +37,7 @@ You want a unique workflow file, e.g. `.github/workflows/codeowners-merge.yml`
 ```yml
 name: Codeowners merging
 on:
-  pull_request_target: { types: [opened] }
+  pull_request_target: { types: [opened, reopened, ready_for_review] }
   issue_comment: { types: [created] }
   pull_request_review: { types: [submitted] }
 
