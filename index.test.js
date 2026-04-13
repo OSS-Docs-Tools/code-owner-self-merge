@@ -1,82 +1,84 @@
+import { test, describe } from "node:test";
+import assert from "node:assert/strict";
 import { getFilesNotOwnedByCodeOwner, findCodeOwnersForChangedFiles, githubLoginIsInCodeowners, hasValidLgtmSubstring } from "./index.js";
 
 test("determine who owns a set of files", () => {
   const noFiles = findCodeOwnersForChangedFiles(["root-codeowners/one.two.js"], "./test-code-owners-repo");
-  expect(noFiles.users).toEqual(["@two"]);
+  assert.deepStrictEqual(noFiles.users, ["@two"]);
 
   const filesNotInCodeowners = findCodeOwnersForChangedFiles(["root-codeowners/one.two.ts"], "./test-code-owners-repo");
-  expect(filesNotInCodeowners.users).toEqual([]);
+  assert.deepStrictEqual(filesNotInCodeowners.users, []);
 });
 
 test("real world", () => {
   const changed = ["/packages/tsconfig-reference/copy/pt/options/files.md"];
   const filesNotInCodeowners = findCodeOwnersForChangedFiles(changed, ".");
-  expect(filesNotInCodeowners.users).toEqual(["@khaosdoctor", "@danilofuchs", "@orta"]);
+  assert.deepStrictEqual(filesNotInCodeowners.users, ["@khaosdoctor", "@danilofuchs", "@orta"]);
 });
 
 test("real world 2", () => {
   const changed = ["/packages/typescriptlang-org/src/copy/pt/index.ts", "/packages/typescriptlang-org/src/copy/pt/nav.ts"];
   const filesNotInCodeowners = findCodeOwnersForChangedFiles(changed, ".");
-  expect(filesNotInCodeowners.users).toEqual(["@khaosdoctor", "@danilofuchs", "@orta"]);
+  assert.deepStrictEqual(filesNotInCodeowners.users, ["@khaosdoctor", "@danilofuchs", "@orta"]);
 });
 
 test("real world with labels", () => {
   // spanish has [] labels in the CODEOWNERS
   const changed = ["/packages/typescriptlang-org/src/copy/es/index.ts", "/packages/typescriptlang-org/src/copy/es/nav.ts"];
   const filesNotInCodeowners = findCodeOwnersForChangedFiles(changed, ".");
-  expect(filesNotInCodeowners.labels).toEqual(["translate", "es"]);
+  assert.deepStrictEqual(filesNotInCodeowners.labels, ["translate", "es"]);
 });
 
 test("deciding if someone has access to merge", () => {
   const noFiles = getFilesNotOwnedByCodeOwner("@two", ["root-codeowners/one.two.js"], "./test-code-owners-repo");
-  expect(noFiles).toEqual([]);
+  assert.deepStrictEqual(noFiles, []);
 
   const filesNotInCodeowners = getFilesNotOwnedByCodeOwner("@two", ["random-path/file.ts"], "./test-code-owners-repo");
-  expect(filesNotInCodeowners).toEqual(["random-path/file.ts"]);
+  assert.deepStrictEqual(filesNotInCodeowners, ["random-path/file.ts"]);
 });
 
-describe(githubLoginIsInCodeowners, () => {
+describe("githubLoginIsInCodeowners", () => {
   test("allows folks found in the codeowners", () => {
     const ortaIn = githubLoginIsInCodeowners("orta", ".");
-    expect(ortaIn).toEqual(true);
+    assert.strictEqual(ortaIn, true);
   });
   test("ignores case", () => {
     const ortaIn = githubLoginIsInCodeowners("OrTa", ".");
-    expect(ortaIn).toEqual(true);
+    assert.strictEqual(ortaIn, true);
   });
   test("denies other accounts", () => {
     const noDogMan = githubLoginIsInCodeowners("dogman", ".");
-    expect(noDogMan).toEqual(false);
+    assert.strictEqual(noDogMan, false);
   });
   test("denies subsets of existing accounts", () => {
     const noOrt = githubLoginIsInCodeowners("ort", ".");
-    expect(noOrt).toEqual(false);
+    assert.strictEqual(noOrt, false);
   });
-})
+});
 
-describe(hasValidLgtmSubstring, () => {
+describe("hasValidLgtmSubstring", () => {
   test("allows lgtm", () => {
     const isValidSubstring = hasValidLgtmSubstring("this lgtm!");
-    expect(isValidSubstring).toEqual(true);
+    assert.strictEqual(isValidSubstring, true);
   });
   test("denies lgtm but", () => {
     const isValidSubstring = hasValidLgtmSubstring("this lgtm but");
-    expect(isValidSubstring).toEqual(false);
+    assert.strictEqual(isValidSubstring, false);
   });
-  test("denies lgtm but", () => {
+  test("denies lgtm but with comma", () => {
     const isValidSubstring = hasValidLgtmSubstring("this lgtm, but");
-    expect(isValidSubstring).toEqual(false);
+    assert.strictEqual(isValidSubstring, false);
   });
   test("denies lgtm in double quotes", () => {
     const isValidSubstring = hasValidLgtmSubstring("\"lgtm\"");
-    expect(isValidSubstring).toEqual(false);
+    assert.strictEqual(isValidSubstring, false);
   });
   test("denies lgtm in single quotes", () => {
     const isValidSubstring = hasValidLgtmSubstring("'lgtm");
-    expect(isValidSubstring).toEqual(false);
+    assert.strictEqual(isValidSubstring, false);
   });
   test("denies lgtm in inline code blocks", () => {
     const isValidSubstring = hasValidLgtmSubstring("lgtm`");
-    expect(isValidSubstring).toEqual(false);
+    assert.strictEqual(isValidSubstring, false);
   });
-})
+});

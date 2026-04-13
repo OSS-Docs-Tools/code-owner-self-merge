@@ -123,7 +123,7 @@ Then 2 for handling fallbacks on PRs which aren't able to be maintained by anyon
 
 ### Dev
 
-Use `npx jest --watch` to run tests.
+Use `node --test --watch` to run tests.
 
 ### Deploy
 

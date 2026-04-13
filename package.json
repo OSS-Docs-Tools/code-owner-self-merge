@@ -5,16 +5,15 @@
   "main": "index.js",
   "license": "MIT",
   "engines": {
-    "node": ">=12.17.0"
+    "node": ">=20.0.0"
   },
   "scripts": {
-    "test": "NODE_OPTIONS=--experimental-vm-modules npx jest"
+    "test": "node --test"
   },
   "dependencies": {
     "@actions/core": "^1.2.4",
     "@actions/github": "^4.0.0",
     "@octokit/webhooks": "^7.9.3",
-    "@types/jest": "^26.0.9",
     "codeowners": "^4.2.0"
   }
 }
