@@ -1,16 +1,19 @@
 {
   "name": "code-owner-self-merge",
   "version": "1.0.0",
+  "type": "module",
   "main": "index.js",
   "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
-    "test": "npx jest"
+    "test": "node --test"
   },
   "dependencies": {
     "@actions/core": "^1.2.4",
     "@actions/github": "^4.0.0",
     "@octokit/webhooks": "^7.9.3",
-    "@types/jest": "^26.0.9",
     "codeowners": "^4.2.0"
   }
 }

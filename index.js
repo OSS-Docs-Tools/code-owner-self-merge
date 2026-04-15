@@ -1,9 +1,10 @@
 // @ts-check
 
-const { context, getOctokit } = require('@actions/github')
-const core = require('@actions/core');
-const Codeowners = require('codeowners');
-const {readFileSync} = require("fs");
+import { context, getOctokit } from '@actions/github'
+import core from '@actions/core';
+import Codeowners from 'codeowners';
+import { readFileSync } from "fs";
+import { pathToFileURL } from "url";
 
 const githubServerUrl = process.env['GITHUB_SERVER_URL'] || 'https://github.com'
 
@@ -382,15 +383,14 @@ async function createOrAddLabel(octokit, repoDeets, labelConfig) {
 }
 
 // For tests
-module.exports = {
+export {
   getFilesNotOwnedByCodeOwner,
   findCodeOwnersForChangedFiles,
   githubLoginIsInCodeowners,
   hasValidLgtmSubstring
 }
 
-// @ts-ignore
-if (!module.parent) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
     run()
   } catch (error) {
